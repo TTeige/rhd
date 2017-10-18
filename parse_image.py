@@ -8,8 +8,8 @@ import csv
 import sys
 
 
-# def find_box_area(x1, y1, x2, y2):
-#     return (x2 - x1 + 1) * (y2 - y1 + 1)
+def find_box_area(x1, y1, x2, y2):
+    return (x2 - x1 + 1) * (y2 - y1 + 1)
 
 
 def truncate_float(f, n):
@@ -129,14 +129,16 @@ def handle_image(target_dir, file_location, fn):
             os.makedirs(single_image_dir)
 
         with open(os.path.join(single_image_dir, fn.split('.')[0] + "_bb_locations.csv"), "w") as csv_file:
-            writer = csv.DictWriter(csv_file, ['x', 'y', 'w', 'h'])
+            writer = csv.DictWriter(csv_file, ['fn', 'x', 'y', 'w', 'h'])
             writer.writeheader()
             for i, cnt in enumerate(contours):
                 x, y, w, h = cv2.boundingRect(cnt)
+                if not validate_box(x, y, w, h):
+                    continue
                 candidate = extract_number(x, y, w, h, img)
                 reshaped = reshape_img(candidate)
                 fn_final = os.path.join(single_image_dir, (str(i) + "_" + fn))
-                writer.writerow({'x': x, 'y': y, 'w': w, 'h': h})
+                writer.writerow({'fn': fn_final, 'x': x, 'y': y, 'w': w, 'h': h})
                 cv2.imwrite(fn_final, reshaped)
 
         return fn
@@ -145,11 +147,19 @@ def handle_image(target_dir, file_location, fn):
         print(e)
 
 
+def validate_box(x, y, w, h):
+    if w * h < 100:
+        return False
+    if w / h > 5 or h / w > 5:
+        return False
+    return True
+
+
 def extract_number(x, y, w, h, img):
     possible_number_img = img[y:y + h, x:x + w]
     possible_number_img = cv2.resize(possible_number_img, (20, 20), interpolation=cv2.INTER_CUBIC)
     possible_number_img = cv2.bitwise_not(possible_number_img)
-    retval, possible_number_img = cv2.threshold(possible_number_img, 150, 255, cv2.THRESH_BINARY)
+    # retval, possible_number_img = cv2.threshold(possible_number_img, 150, 255, cv2.THRESH_BINARY)
     return possible_number_img
 
 
