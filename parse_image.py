@@ -154,8 +154,7 @@ def handle_image(target_dir, file_location, fn):
                     if rect == rect2:
                         continue
                     # if calculate_distance(rect, rect2) < 20:
-                    if do_merge(rect, rect2):
-                        print("Merged " + fn)
+                    if check_merge(rect, rect2):
                         merged = merge_rects(rect, rect2)
                         completed_boxes.append(merged)
                         bounding_rects.remove(rect2)
@@ -222,11 +221,11 @@ def calculate_distance(rect1, rect2):
     return np.linalg.norm(a - b)
 
 
-def do_merge(rect1, rect2):
+def check_merge(rect1, rect2):
     # Check if the merge target is between leftmost and rightmost edge of the bounding box
-    if rect1.x - 5 <= rect2.x <= rect1.x + rect1.w + 5:
+    if rect1.x - 10 <= rect2.x <= rect1.x + rect1.w + 10:
         # Only merge if box is above and within threshold
-        if (rect1.y - rect2.y < 10 or rect2.y - rect1.y < 10) and (rect2.h < 10 or rect1.h < 10):
+        if np.abs(rect1.y - rect2.y) < 10 and rect2.h < 10:
             return True
     return False
 
