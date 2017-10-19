@@ -8,6 +8,14 @@ import csv
 import sys
 
 
+class Rect:
+    def __init__(self, x, y, w, h):
+        self.x = x
+        self.y = y
+        self.w = w
+        self.h = h
+
+
 def find_box_area(x1, y1, x2, y2):
     return (x2 - x1 + 1) * (y2 - y1 + 1)
 
@@ -131,14 +139,40 @@ def handle_image(target_dir, file_location, fn):
         with open(os.path.join(single_image_dir, fn.split('.')[0] + "_bb_locations.csv"), "w") as csv_file:
             writer = csv.DictWriter(csv_file, ['fn', 'x', 'y', 'w', 'h'])
             writer.writeheader()
+            bounding_rects = []
             for i, cnt in enumerate(contours):
                 x, y, w, h = cv2.boundingRect(cnt)
-                if not validate_box(x, y, w, h):
+                rect = Rect(x, y, w, h)
+                bounding_rects.append(rect)
+
+            completed_boxes = []
+
+            # Make a naive assumption  that rectangles can only be merged once
+            # Have to work around the edge cases of poorly written 5 numbers
+            for rect in bounding_rects:
+                for rect2 in bounding_rects:
+                    if rect == rect2:
+                        continue
+                    # if calculate_distance(rect, rect2) < 20:
+                    if do_merge(rect, rect2):
+                        print("Merged " + fn)
+                        merged = merge_rects(rect, rect2)
+                        completed_boxes.append(merged)
+                        bounding_rects.remove(rect2)
+                        bounding_rects.remove(rect)
+                        break
+
+            for rect in bounding_rects:
+                completed_boxes.append(rect)
+
+            for i, rect in enumerate(completed_boxes):
+                if not validate_box(rect.x, rect.y, rect.w, rect.h):
                     continue
-                candidate = extract_number(x, y, w, h, img)
+                candidate = extract_number(rect.x, rect.y, rect.w, rect.h, img)
                 reshaped = reshape_img(candidate)
                 fn_final = os.path.join(single_image_dir, (str(i) + "_" + fn))
-                writer.writerow({'fn': fn_final, 'x': x, 'y': y, 'w': w, 'h': h})
+                writer.writerow({'fn': fn_final, 'x': int(rect.x / 0.3), 'y': int(rect.y / 0.3),
+                                 'w': int(rect.w / 0.3), 'h': int(rect.h / 0.3)})
                 cv2.imwrite(fn_final, reshaped)
 
         return fn
@@ -147,12 +181,54 @@ def handle_image(target_dir, file_location, fn):
         print(e)
 
 
+def merge_rects(rect1, rect2):
+    if rect1.x <= rect2.x:
+        new_x = rect1.x
+    else:
+        new_x = rect2.x
+
+    if rect1.y <= rect2.y:
+        new_y = rect1.y
+    else:
+        new_y = rect2.y
+
+    if rect1.x + rect1.w <= rect2.x + rect2.w:
+        new_x2 = rect2.x + rect2.w
+    else:
+        new_x2 = rect1.x + rect1.w
+
+    if rect1.y + rect1.h <= rect2.y + rect2.h:
+        new_y2 = rect2.y + rect2.h
+    else:
+        new_y2 = rect1.y + rect1.h
+
+    new_w = new_x2 - new_x
+    new_h = new_y2 - new_y
+
+    return Rect(new_x, new_y, new_w, new_h)
+
+
 def validate_box(x, y, w, h):
-    if w * h < 100:
+    if w * h < 50 or w * h > 3000:
         return False
     if w / h > 5 or h / w > 5:
         return False
     return True
+
+
+def calculate_distance(rect1, rect2):
+    a = np.array([rect1.x, rect1.y])
+    b = np.array([rect2.x, rect2.y])
+    return np.linalg.norm(a - b)
+
+
+def do_merge(rect1, rect2):
+    # Check if the merge target is between leftmost and rightmost edge of the bounding box
+    if rect1.x - 5 <= rect2.x <= rect1.x + rect1.w + 5:
+        # Only merge if box is above and within threshold
+        if (rect1.y - rect2.y < 10 or rect2.y - rect1.y < 10) and (rect2.h < 10 or rect1.h < 10):
+            return True
+    return False
 
 
 def extract_number(x, y, w, h, img):
