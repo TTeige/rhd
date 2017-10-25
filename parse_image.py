@@ -153,7 +153,6 @@ def handle_image(target_dir, file_location, fn):
                 for rect2 in bounding_rects:
                     if rect == rect2:
                         continue
-                    # if calculate_distance(rect, rect2) < 20:
                     if check_merge(rect, rect2):
                         merged = merge_rects(rect, rect2)
                         completed_boxes.append(merged)
@@ -318,11 +317,11 @@ def main(image_path, output_path="./out"):
 if __name__ == '__main__':
     if len(sys.argv) < 2:
         print("Usage: python3 " + __file__ + " <path/to/images>")
-        print("Optional: <ouput/image/path>")
+        print("Optional: <output/image/path>")
         exit(1)
     if sys.argv[1].lower() == "help":
         print("Usage: python3 " + __file__ + " <path/to/images>")
-        print("Optional: <ouput/image/path>")
+        print("Optional: <output/image/path>")
         exit(1)
     elif len(sys.argv) == 3:
         main(sys.argv[1], sys.argv[2])
