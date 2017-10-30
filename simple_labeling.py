@@ -18,6 +18,7 @@ class MainWindow(Gtk.Window):
         self.init_image_paths(image_path)
         self.image_index = 0
         self.labeled_image_count = 0
+        self.current_file = ""
 
         self.csv_file = csv_file
         fieldnames = ['filename', 'label']
@@ -35,6 +36,11 @@ class MainWindow(Gtk.Window):
         self.set_size_request(400, 200)
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         self.add(vbox)
+
+        filename_box = Gtk.Box(spacing=6)
+        self.filename_label = Gtk.Label(str.format("{}", self.current_file))
+        filename_box.pack_start(self.filename_label, True, True, 0)
+        vbox.pack_start(filename_box, True, True, 0)
 
         next_prev_box = Gtk.Box(spacing=6)
         prev_image = Gtk.Button.new_with_label("Prev")
@@ -81,6 +87,7 @@ class MainWindow(Gtk.Window):
     def go_to_next(self):
         self.image_index += 1
         self.display_image = GdkPixbuf.Pixbuf.new_from_file(self.image_paths[self.image_index])
+        self.filename_label.set_text(str.format("{}", self.image_paths[self.image_index]))
         self.img.set_from_pixbuf(self.display_image)
 
     def next_image(self, button):
@@ -118,7 +125,9 @@ class MainWindow(Gtk.Window):
     def init_image_paths(self, images):
         for dir, dirs, fns in os.walk(images):
             for fn in fns:
-                fp = dir + "/" + fn
+                if fn.split('.')[1] != "jpg":
+                    continue
+                fp = os.path.join(dir, fn)
                 self.image_paths_set.add(fp)
 
     def resume(self, fieldnames, csv_file):
@@ -136,7 +145,8 @@ def main(argv):
         print("Usage: python3 simple_labeling.py <path/to/images>")
         return
 
-    with open('labels.csv', 'r+') as csv_file:
+    with open('labels.csv', 'a+') as csv_file:
+        csv_file.seek(0)
         window = MainWindow(argv[1], csv_file)
         window.connect('delete-event', Gtk.main_quit)
         window.show_all()
