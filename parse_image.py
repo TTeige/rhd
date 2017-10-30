@@ -125,9 +125,12 @@ def truncate_float(f, n):
 
 def handle_image(target_dir, file_location, fn):
     try:
-        img = cv2.imread(file_location)
-        img = resize_img(img)
-        img = convert_img(img)
+        img_original = cv2.imread(file_location)
+        # img = resize_img(img_original)
+        img = convert_img(img_original)
+        kernel = np.ones((5, 5), np.uint8)
+        retval, img = cv2.threshold(img, 200, 255, cv2.THRESH_BINARY)
+        img = cv2.dilate(img, kernel, iterations=1)
         blur = cv2.GaussianBlur(img, (5, 5), 0)
         edges = cv2.Canny(blur, 100, 200)
         img2, contours, hierarchy = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -139,40 +142,41 @@ def handle_image(target_dir, file_location, fn):
         with open(os.path.join(single_image_dir, fn.split('.')[0] + "_bb_locations.csv"), "w") as csv_file:
             writer = csv.DictWriter(csv_file, ['fn', 'x', 'y', 'w', 'h'])
             writer.writeheader()
-            bounding_rects = []
+            # bounding_rects = []
             for i, cnt in enumerate(contours):
                 x, y, w, h = cv2.boundingRect(cnt)
                 rect = Rect(x, y, w, h)
-                bounding_rects.append(rect)
+                # bounding_rects.append(rect)
 
-            completed_boxes = []
+                # completed_boxes = []
 
-            # Make a naive assumption  that rectangles can only be merged once
-            # Have to work around the edge cases of poorly written 5 numbers
-            for rect in bounding_rects:
-                for rect2 in bounding_rects:
-                    if rect == rect2:
-                        continue
-                    if check_merge(rect, rect2):
-                        merged = merge_rects(rect, rect2)
-                        completed_boxes.append(merged)
-                        bounding_rects.remove(rect2)
-                        bounding_rects.remove(rect)
-                        break
+                # Make a naive assumption  that rectangles can only be merged once
+                # Have to work around the edge cases of poorly written 5 numbers
+                # for rect in bounding_rects:
+                #     for rect2 in bounding_rects:
+                #         if rect == rect2:
+                #             continue
+                #         if check_merge(rect, rect2):
+                #             merged = merge_rects(rect, rect2)
+                #             completed_boxes.append(merged)
+                #             bounding_rects.remove(rect2)
+                #             bounding_rects.remove(rect)
+                #             break
+                #
+                # for rect in bounding_rects:
+                #     completed_boxes.append(rect)
 
-            for rect in bounding_rects:
-                completed_boxes.append(rect)
-
-            for i, rect in enumerate(completed_boxes):
-                if not validate_box(rect.x, rect.y, rect.w, rect.h):
-                    continue
+                # for i, rect in enumerate(completed_boxes):
+                # if not validate_box(rect.x, rect.y, rect.w, rect.h):
+                #     continue
                 candidate = extract_number(rect.x, rect.y, rect.w, rect.h, img)
                 reshaped = reshape_img(candidate)
                 fn_final = os.path.join(single_image_dir, (str(i) + "_" + fn))
                 writer.writerow({'fn': fn_final, 'x': int(rect.x / 0.3), 'y': int(rect.y / 0.3),
                                  'w': int(rect.w / 0.3), 'h': int(rect.h / 0.3)})
+                # writer.writerow({'fn': fn_final, 'x': int(rect.x), 'y': int(rect.y),
+                #                  'w': int(rect.w), 'h': int(rect.h)})
                 cv2.imwrite(fn_final, reshaped)
-
         return fn
 
     except Exception as e:
@@ -231,16 +235,16 @@ def check_merge(rect1, rect2):
 
 def extract_number(x, y, w, h, img):
     possible_number_img = img[y:y + h, x:x + w]
-    possible_number_img = cv2.resize(possible_number_img, (20, 20), interpolation=cv2.INTER_CUBIC)
+    possible_number_img = cv2.resize(possible_number_img, (24, 24), interpolation=cv2.INTER_AREA)
     possible_number_img = cv2.bitwise_not(possible_number_img)
     # retval, possible_number_img = cv2.threshold(possible_number_img, 150, 255, cv2.THRESH_BINARY)
     return possible_number_img
 
 
 def reshape_img(possible_number_img):
-    reshaped = np.full((28, 28), 255, dtype='int')
+    reshaped = np.full((28, 28), 255, dtype='uint8')
     p = np.array(possible_number_img)
-    x_off = y_off = 4
+    x_off = y_off = 2
     reshaped[x_off:p.shape[0] + x_off, y_off:p.shape[1] + y_off] = p
     return reshaped
 
@@ -275,8 +279,6 @@ def main(image_path, output_path="./out"):
     if not os.path.exists(output_path):
         os.makedirs(output_path)
     start_time = time.time()
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
     with cf.ProcessPoolExecutor() as executor:
         futures = []
         completed_images = 0
