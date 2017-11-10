@@ -1,6 +1,8 @@
 import cv2
 import argparse
 import numpy as np
+import os
+import concurrent.futures as cf
 
 col_names = {"husholdnings_nr": 0,
              "person_nr": 1,
@@ -85,6 +87,9 @@ def split_row(img_path, row_1, row_2, target_fields, process_images):
     try:
         fields = []
         img = cv2.imread(img_path)
+        if len(img) == 0:
+            print("Image not found: " + img_path + " , check path prefix or remote connections")
+            return []
         if process_images:
             img = convert_img(img)
         i = 1
@@ -92,11 +97,12 @@ def split_row(img_path, row_1, row_2, target_fields, process_images):
             field_img = check_extraction(img, row_1, row_2, i, target_fields)
             if len(field_img) != 0:
                 fields.append(field_img)
-                cv2.imshow("", field_img)
-                cv2.waitKey()
+                # cv2.imshow("", field_img)
+                # cv2.waitKey()
             i += 2
         return fields
     except Exception as e:
+        print("Skipping image " + img_path + " Error: ")
         print(e)
 
 
@@ -126,47 +132,84 @@ def extract_row(line):
     return row, int(_row[1])
 
 
-def main(args):
+def read_full_image_lines(file, mod):
+    first_line = file.readline()
+
+    rows = []
+    filename = ""
+    i = 0
+    while i < 19:
+        i += 1
+        second_line = file.readline()
+        filename = get_filename(first_line, mod)
+
+        row_1, row_1_index = extract_row(first_line)
+        row_2, row_2_index = extract_row(second_line)
+        first_line = second_line
+
+        if args.type == "digits":
+            if row_2_index % 2 != 0:
+                continue
+        elif args.type == "writing":
+            if row_2_index % 2 == 0:
+                continue
+        rows.append(row_1)
+        rows.append(row_2)
+    return rows, filename
+
+
+def process_rows(filename, rows):
+    target_fields = []
+    if len(args.cols_number) != 0:
+        target_fields = args.cols_number
+    elif len(args.cols_name) != 0:
+        target_fields = args.cols_name
+
+    i = 0
+    while i < len(rows):
+        row_1 = rows[i]
+        row_2 = rows[i + 1]
+        fields = split_row(filename, row_1, row_2, target_fields, args.process_images)
+        i += 2
+        for field in fields:
+            # cv2.imshow("", field)
+            # cv2.waitKey()
+            pass
+    # print("Completed " + filename)
+
+
+def main():
     mod = args.img_path_mod
+    if not os.path.exists(args.output):
+        os.mkdir(args.output)
 
     print("Image: " + args.coordinate_file)
     print("Replacement prefix: " + mod)
-
+    completed = 0
     with open(args.coordinate_file, 'r') as co_file:
-        # Skip the header line
-        next(co_file)
 
-        if args.type == "digits":
-            next(co_file)
+        futures = []
 
-        first_line = co_file.readline()
+        with cf.ProcessPoolExecutor() as executor:
+            # Skip the header line
+            co_file.readline()
 
-        for second_line in co_file:
-            filename = get_filename(first_line, mod)
-
-            # Reset the first line to the next image and read a new second line
-            if filename != get_filename(second_line, mod):
-                first_line = second_line
-                second_line = co_file.readline()
-
-            row_1, row_1_index = extract_row(first_line)
-            row_2, row_2_index = extract_row(second_line)
-            first_line = second_line
-
+            # If looking for digits fields, skip the second row as well
             if args.type == "digits":
-                if row_2_index % 2 != 0:
-                    continue
-            elif args.type == "writing":
-                if row_2_index % 2 == 0:
-                    continue
+                co_file.readline()
 
-            target_fields = []
-            if len(args.cols_number) != 0:
-                target_fields = args.cols_number
-            elif len(args.cols_name) != 0:
-                target_fields = args.cols_name
+            while co_file.tell() != os.fstat(co_file.fileno()).st_size:
+                rows, filename = read_full_image_lines(co_file, mod)
 
-            row = split_row(filename, row_1, row_2, target_fields, args.process_images)
+                futures.append(executor.submit(process_rows, filename, rows))
+
+            for done in cf.as_completed(futures):
+                futures.remove(done)
+                completed += 1
+                if completed % 10 == 0:
+                    print(completed / args.number)
+                if completed == args.number:
+                    return
 
 
 if __name__ == '__main__':
@@ -212,10 +255,15 @@ if __name__ == '__main__':
                                  "sist_kommune "
                                  "bosatt_i_1946",
                             default=[])
+    arg_parser.add_argument("--number", "-n", type=int,
+                            help="specify the number of images to process starting from the top of the coordinate "
+                                 "files or from continuation point specified in the checkpoint file",
+                            default=0)
+    arg_parser.add_argument("--output", "-o", type=str, help="ouput path", default=".")
 
     args = arg_parser.parse_args()
     _tmp = []
     for num in args.cols_number:
         _tmp.append(int(num))
     args.cols_number = _tmp
-    main(args)
+    main()
