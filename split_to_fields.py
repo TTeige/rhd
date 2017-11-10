@@ -81,11 +81,12 @@ def check_extraction(img, row_1, row_2, i, target_fields):
     return field_img
 
 
-def split_row(img_path, row_1, row_2, target_fields):
+def split_row(img_path, row_1, row_2, target_fields, process_images):
     try:
         fields = []
         img = cv2.imread(img_path)
-        img = convert_img(img)
+        if process_images:
+            img = convert_img(img)
         i = 1
         while i + 2 < len(row_1):
             field_img = check_extraction(img, row_1, row_2, i, target_fields)
@@ -165,7 +166,7 @@ def main(args):
             elif len(args.cols_name) != 0:
                 target_fields = args.cols_name
 
-            row = split_row(filename, row_1, row_2, target_fields)
+            row = split_row(filename, row_1, row_2, target_fields, args.process_images)
 
 
 if __name__ == '__main__':
