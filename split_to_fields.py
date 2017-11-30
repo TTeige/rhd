@@ -514,11 +514,8 @@ def main():
     completed = 0
     num_reads = 0
     num_skipped = 0
-    img_list, total = create_img_list()
+    img_list = create_img_list()
 
-    if args.number != 0:
-        total = args.number
-    print("Processing " + str(total) + " images")
     start_time = time.time()
     with open(args.coordinate_file, 'r') as co_file:
         with open(args.progress_file, 'a+') as progress_file:
@@ -571,8 +568,8 @@ def main():
                     futures.remove(done)
                     completed += 1
                     if completed % 10 == 0:
-                        print(str(completed / total * 100) + "%")
-                    if completed == total:
+                        print(str(completed / num_reads * 100) + "%")
+                    if completed == num_reads:
                         break
 
                 print("--- " + str(time.time() - start_time) + " ---")
