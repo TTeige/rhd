@@ -491,15 +491,16 @@ def extract_rows(rows):
 
 def create_img_list():
     propper_img_list = []
+    count = 0
     img_list_start = ["fs10061402170436"]
     img_list_end = ["fs10061402177225"]
-    for i in range(0, len(img_list_start)):
-        start_num = int(img_list_start[i].split("fs")[-1])
-        end_num = int(img_list_end[i].split("fs")[-1])
-        for index in range(start_num, end_num):
-            propper_img_list.append("fs" + str(index))
+    start_num = int(img_list_start[0].split("fs")[-1])
+    end_num = int(img_list_end[0].split("fs")[-1])
+    for index in range(start_num, end_num):
+        propper_img_list.append("fs" + str(index))
+        count += 1
 
-    return propper_img_list
+    return propper_img_list, count
 
 
 def main():
@@ -509,10 +510,15 @@ def main():
 
     print("Coordinate file: " + args.coordinate_file)
     print("Replacement prefix: " + mod)
+    print(args)
     completed = 0
     num_reads = 0
     num_skipped = 0
-    img_list = create_img_list()
+    img_list, total = create_img_list()
+
+    if args.number != 0:
+        total = args.number
+    print("Processing " + str(total) + " images")
     start_time = time.time()
     with open(args.coordinate_file, 'r') as co_file:
         with open(args.progress_file, 'a+') as progress_file:
@@ -532,8 +538,6 @@ def main():
                 # Read the first line to initialize the reading func
                 line = co_file.readline()
                 while co_file.tell() != os.fstat(co_file.fileno()).st_size:
-                    if num_skipped % 2000 == 0 and num_skipped != 0:
-                        print(num_skipped)
                     rows, filename, line = read_full_image_lines(co_file, mod, line)
                     if filename == "":
                         continue
@@ -550,6 +554,8 @@ def main():
                     else:
                         num_skipped += 1
                         continue
+
+                print("Skipped a total of " + str(num_skipped) + " images")
                 for done in cf.as_completed(futures):
                     rows, fn = done.result()
                     fn = fn.split("/")[-1]
@@ -565,8 +571,8 @@ def main():
                     futures.remove(done)
                     completed += 1
                     if completed % 10 == 0:
-                        print(str(completed / args.number * 100) + "%")
-                    if completed == args.number:
+                        print(str(completed / total * 100) + "%")
+                    if completed == total:
                         break
 
                 print("--- " + str(time.time() - start_time) + " ---")
