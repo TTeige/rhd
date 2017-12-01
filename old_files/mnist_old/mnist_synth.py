@@ -142,20 +142,6 @@ def generate_digit_sequences(data, labels, n):
 # Generate a synthetic dataset of digit sequences with 50,000 new images
 X_new, y_new = generate_digit_sequences(X, y, dataset_size)
 
-print("Images", X_new.shape)
-print("Labels", y_new.shape)
-
-# Plot a histogram showing the class distribution
-plt.subplot2grid((1, 2), (0, 0))
-plt.hist(y_new.flatten())
-plt.title("Class Distribution (10 = empty)")
-
-# Plot a histogram showing the sequence length distribution
-plt.subplot2grid((1, 2), (0, 1))
-plt.hist((y_new != 10).sum(1), color='r', bins=4)
-plt.xlim(0, 3)
-plt.title("Sequence Length Distribution")
-plt.show()
 
 from sklearn.cross_validation import train_test_split
 

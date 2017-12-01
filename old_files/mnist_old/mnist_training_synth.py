@@ -182,7 +182,7 @@ logits_3, w_s3 = softmax_function(fc_1, fc_size, num_labels, 'w_s3')
 y_pred = [logits_1, logits_2, logits_3]
 
 # The class-number is the index of the largest element.
-y_pred_cls = tf.transpose(tf.argmax(y_pred, dimension=2))
+y_pred_cls = tf.transpose(tf.argmax(y_pred, dimension=2), name="y_pred_cls")
 loss1 = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits_1, labels=y_true[:, 0]))
 loss2 = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits_2, labels=y_true[:, 1]))
 loss3 = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits_3, labels=y_true[:, 2]))
@@ -210,7 +210,7 @@ def accuracy(predictions, labels):
 
 
 session = tf.Session(config=tf.ConfigProto(log_device_placement=True))
-session.run(tf.global_variables_initializer())
+session.run(tf.initialize_all_variables())
 
 # Batch size
 batch_size = 64
@@ -229,8 +229,7 @@ if not os.path.exists(save_dir):
     os.makedirs(save_dir)
 
 save_path = os.path.join(save_dir, 'mnist_net2')
-saver.restore(sess=session, save_path=save_path)
-print("Model restored")
+
 total_iterations = 0
 
 
@@ -278,7 +277,7 @@ def optimize(num_iterations):
     print('Model saved in file: {}'.format(save_path))
 
 
-optimize(num_iterations=1)
+optimize(num_iterations=200000)
 test_pred = session.run(y_pred_cls, feed_dict={x: X_test, y_true: y_test, keep_prob: 1.0})
 
 session.close()
