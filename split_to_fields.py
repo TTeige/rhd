@@ -180,8 +180,8 @@ def read_full_image_lines(file, mod, first):
         first_line = second_line
 
 
-def process_rows(filename, rows):
-    extracted_rows = extract_rows(rows)
+def process_rows(filename, rows, args):
+    extracted_rows = extract_rows(rows, args)
 
     target_fields = []
     if len(args.cols_number) != 0:
@@ -199,7 +199,7 @@ def process_rows(filename, rows):
     return image_fields, filename
 
 
-def extract_rows(rows):
+def extract_rows(rows, args):
     index = 0
     step = 1
     if args.type == "digits":
@@ -217,16 +217,16 @@ def extract_rows(rows):
     return extracted_row
 
 
-def create_img_list(range):
+def create_img_list(img_range):
     propper_img_list = []
     count = 0
     # img_list_start = ["fs10061402170436"]
     # img_list_end = ["fs10061402177225"]
-    img_list_start = range[0]
-    img_list_end = range[1]
+    img_list_start = img_range[0]
+    img_list_end = img_range[1]
     start_num = int(img_list_start[0].split("fs")[-1])
     end_num = int(img_list_end[0].split("fs")[-1])
-    for index in range(start_num, end_num):
+    for index in img_range(start_num, end_num):
         propper_img_list.append("fs" + str(index))
         count += 1
 
@@ -276,7 +276,7 @@ def run(args):
                         continue
                     if img_list is not None:
                         if filename.split("/")[-1].split(".")[0] in img_list:
-                            futures.append(executor.submit(process_rows, filename, rows))
+                            futures.append(executor.submit(process_rows, filename, rows, args))
                             num_reads += 1
                             if num_reads == args.number:
                                 break
@@ -284,7 +284,7 @@ def run(args):
                             num_skipped += 1
                             continue
                     else:
-                        futures.append(executor.submit(process_rows, filename, rows))
+                        futures.append(executor.submit(process_rows, filename, rows, args))
                         num_reads += 1
                         if num_reads == args.number:
                             break
