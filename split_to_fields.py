@@ -33,278 +33,6 @@ col_names = {"husholdnings_nr": 0,
              "bosatt_i_1946": 25}
 
 
-# img_list_start = [
-#     "fs10171511048641",
-#     "fs10171511049725",
-#     "fs10171511049107",
-#     "fs10171511049357",
-#     "fs10171511050163",
-#     "fs10171511050991",
-#     "fs10171511051553",
-#     "fs10171511050671",
-#     "fs10171511052129",
-#     "fs10171511052725",
-#     "fs10171511053243",
-#     "fs10171511054165",
-#     "fs10171511054665",
-#     "fs10171511053697",
-#     "fs10171511055091",
-#     "fs10171511055455",
-#     "fs10171511055907",
-#     "fs10171511056485",
-#     "fs10171511056949",
-#     "fs10171511057269",
-#     "fs10171511057737",
-#     "fs10171511058191",
-#     "fs10171511058639",
-#     "fs10171511058969",
-#     "fs10171512059331",
-#     "fs10171512060003",
-#     "fs10171512060469",
-#     "fs10171512061117",
-#     "fs10171512061621",
-#     "fs10171512061975",
-#     "fs10171512063581",
-#     "fs10171512062557",
-#     "fs10171512063169",
-#     "fs10171512064173",
-#     "fs10171512064739",
-#     "fs10171512065317",
-#     "fs10171512065707",
-#     "fs10171512066145",
-#     "fs10171512066595",
-#     "fs10171512067089",
-#     "fs10171512067531",
-#     "fs10171512067997",
-#     "fs10171512068501",
-#     "fs10171512069001",
-#     "fs10171512069471",
-#     "fs10171512072281",
-#     "fs10171512069999",
-#     "fs10171512070479",
-#     "fs10171512070921",
-#     "fs10171512071385",
-#     "fs10171512071865",
-#     "fs10171512072785",
-#     "fs10171512073181",
-#     "fs10171512073663",
-#     "fs10171512074609",
-#     "fs10171512074135",
-#     "fs10171512077883",
-#     "fs10171512075115",
-#     "fs10171512076523",
-#     "fs10171512076985",
-#     "fs10171512077383",
-#     "fs10171512075497",
-#     "fs10171512076007",
-#     "fs10171512078397",
-#     "fs10171512079449",
-#     "fs10171512080091",
-#     "fs10171512080637",
-#     "fs10171512081289",
-#     "fs10171512078893",
-#     "fs10171512081941",
-#     "fs10171512082327",
-#     "fs10171512082707",
-#     "fs10171512083201",
-#     "fs10171512083801",
-#     "fs10171512084449",
-#     "fs10171512085053",
-#     "fs10171512085519",
-#     "fs10171512086355",
-#     "fs10171512086859",
-#     "fs10171512085925",
-#     "fs10171512087349",
-#     "fs10171512087833",
-#     "fs10171512088381",
-#     "fs10171512088803"
-# ]
-#
-# img_list_end = [
-#     "fs10171511049106",
-#     "fs10171511050162",
-#     "fs10171511049356",
-#     "fs10171511049724",
-#     "fs10171511050670",
-#     "fs10171511051552",
-#     "fs10171511052128",
-#     "fs10171511050990",
-#     "fs10171511052724",
-#     "fs10171511053242",
-#     "fs10171511053696",
-#     "fs10171511054664",
-#     "fs10171511055090",
-#     "fs10171511054164",
-#     "fs10171511055454",
-#     "fs10171511055906",
-#     "fs10171511056484",
-#     "fs10171511056948",
-#     "fs10171511057268",
-#     "fs10171511057736",
-#     "fs10171511058190",
-#     "fs10171511058638",
-#     "fs10171511058968",
-#     "fs10171511059330",
-#     "fs10171512060002",
-#     "fs10171512060468",
-#     "fs10171512061116",
-#     "fs10171512061620",
-#     "fs10171512061974",
-#     "fs10171512062556",
-#     "fs10171512064172",
-#     "fs10171512063168",
-#     "fs10171512063580",
-#     "fs10171512064738",
-#     "fs10171512065316",
-#     "fs10171512065706",
-#     "fs10171512066144",
-#     "fs10171512066594",
-#     "fs10171512067088",
-#     "fs10171512067530",
-#     "fs10171512067996",
-#     "fs10171512068500",
-#     "fs10171512069000",
-#     "fs10171512069470",
-#     "fs10171512069998",
-#     "fs10171512072734",
-#     "fs10171512070478",
-#     "fs10171512070920",
-#     "fs10171512071384",
-#     "fs10171512071864",
-#     "fs10171512072280",
-#     "fs10171512073180",
-#     "fs10171512073662",
-#     "fs10171512074134",
-#     "fs10171512075114",
-#     "fs10171512074608",
-#     "fs10171512078396",
-#     "fs10171512075496",
-#     "fs10171512076984",
-#     "fs10171512077382",
-#     "fs10171512077882",
-#     "fs10171512076006",
-#     "fs10171512076522",
-#     "fs10171512078892",
-#     "fs10171512080090",
-#     "fs10171512080636",
-#     "fs10171512081288",
-#     "fs10171512081940",
-#     "fs10171512079448",
-#     "fs10171512082326",
-#     "fs10171512082706",
-#     "fs10171512083200",
-#     "fs10171512083800",
-#     "fs10171512084448",
-#     "fs10171512085052",
-#     "fs10171512085518",
-#     "fs10171512085924",
-#     "fs10171512086858",
-#     "fs10171512087348",
-#     "fs10171512086354",
-#     "fs10171512087832",
-#     "fs10171512088380",
-#     "fs10171512088802",
-#     "fs10171512089244",
-#     "fs10171606623105",
-#     "fs10171606623843",
-#     "fs10171606624389",
-#     "fs10171606624747",
-#
-# ]
-#
-# folder_names = [
-#     "017KID68571_K0-8",
-#     "017KID68571_K9-12",
-#     "017KID68571_K13-15",
-#     "017KID68571_K16-18",
-#     "017KID68572_K1-4",
-#     "017KID68572_K5-7",
-#     "017KID68572_K8-9",
-#     "017KID68572_K10-11",
-#     "017KID68573_K1-6",
-#     "017KID68573_K7-12",
-#     "017KID68574_K0-2",
-#     "017KID68574_K3-6",
-#     "017KID68574_K7-11",
-#     "017KID68574_K12-17",
-#     "017KID68575_K0-6",
-#     "017KID68575_K7-9",
-#     "017KID68576_K1-6",
-#     "017KID68577_K1-3",
-#     "017KID68577_K4-5",
-#     "017KID68578_K0-6",
-#     "017KID68579_K1-5",
-#     "017KID68579_K6-9",
-#     "017KID68580_K1-3",
-#     "017KID68580_K4-7",
-#     "017KID68581_K1-6",
-#     "017KID68581_K7-11",
-#     "017KID68582_K1-4",
-#     "017KID68582_K5-15",
-#     "017KID68583_K1-5",
-#     "017KID68584_K1-5",
-#     "017KID68584_K6-10",
-#     "017KID68584_K11-14",
-#     "017KID68584_K15-18",
-#     "017KID68585_K1-6",
-#     "017KID68585_K7-12",
-#     "017KID68586_K1-3",
-#     "017KID68586_K4-8",
-#     "017KID68587_K1-3",
-#     "017KID68587_K4-11",
-#     "017KID68588_K1-3",
-#     "017KID68588_K4-9",
-#     "017KID68589_K1-9",
-#     "017KID68590_K1-7",
-#     "017KID68590_K8-14",
-#     "017KID68591_K0-5",
-#     "017KID68591_K6-9",
-#     "017KID68591_K10-11",
-#     "017KID68591_K12-14",
-#     "017KID68591_K15-19",
-#     "017KID68591_K20-24",
-#     "017KID68591_K25-28",
-#     "017KID68592_K0-5",
-#     "017KID68592_K6-12",
-#     "017KID68593_K1-6",
-#     "017KID68593_K7-11",
-#     "017KID68593_K12-15",
-#     "017KID68593_K16-20",
-#     "017KID68594_K1-3",
-#     "017KID68594_K4-5",
-#     "017KID68594_K6-8",
-#     "017KID68594_K9-13",
-#     "017KID68594_K14-20",
-#     "017KID68594_K21-28",
-#     "017KID68594_K29-33",
-#     "017KID68594_K34-37",
-#     "017KID68594_K38-40",
-#     "017KID68595_K1-9",
-#     "017KID68596_K1-9",
-#     "017KID68596_K10-19",
-#     "017KID68597_K0-3",
-#     "017KID68597_K4-6",
-#     "017KID68598_K0-4",
-#     "017KID68598_K5-8",
-#     "017KID68599_K1-8",
-#     "017KID68600_K1-4",
-#     "017KID68600_K5-7",
-#     "017KID68601_K0-3",
-#     "017KID68601_K4-8",
-#     "017KID68601_K9-13",
-#     "017KID68601_K14-16",
-#     "017KID68602_K1-4",
-#     "017KID68602_K5-9",
-#     "017KID68603_K1-7",
-#     "017KID68603_K8-13",
-#     "017KID68569_975",
-#     "017KID68569_976",
-#     "017KID68569_977",
-#     "017KID68569_978"
-# ]
-
-
-
 def extract_field(img, row_1, row_2, i):
     # x position different index on same row
     x1 = row_1[i][0]
@@ -345,7 +73,7 @@ def convert_img(img):
                 break
         if done:
             break
-    for i in range(gray_channel.shape[1]-1, 0, -1):
+    for i in range(gray_channel.shape[1] - 1, 0, -1):
         done = False
         for col in gray_channel[:, i]:
             if col != 0:
@@ -489,11 +217,13 @@ def extract_rows(rows):
     return extracted_row
 
 
-def create_img_list():
+def create_img_list(range):
     propper_img_list = []
     count = 0
-    img_list_start = ["fs10061402170436"]
-    img_list_end = ["fs10061402177225"]
+    # img_list_start = ["fs10061402170436"]
+    # img_list_end = ["fs10061402177225"]
+    img_list_start = range[0]
+    img_list_end = range[1]
     start_num = int(img_list_start[0].split("fs")[-1])
     end_num = int(img_list_end[0].split("fs")[-1])
     for index in range(start_num, end_num):
@@ -503,7 +233,7 @@ def create_img_list():
     return propper_img_list, count
 
 
-def main():
+def run(args):
     mod = args.img_path_mod
     if not os.path.exists(args.output):
         os.mkdir(args.output)
@@ -514,7 +244,9 @@ def main():
     completed = 0
     num_reads = 0
     num_skipped = 0
-    img_list = create_img_list()
+    img_list = None
+    if args.image_range:
+        img_list = create_img_list(args.image_range)
 
     start_time = time.time()
     with open(args.coordinate_file, 'r') as co_file:
@@ -538,44 +270,57 @@ def main():
                     rows, filename, line = read_full_image_lines(co_file, mod, line)
                     if filename == "":
                         continue
-                    if completed_images.get(filename.split("/")[-1]):
+                    if completed_images.get(filename.split(os.path.sep)[-1]):
                         print("Skipping " + filename)
                         num_skipped += 1
                         continue
-
-                    if filename.split("/")[-1].split(".")[0] in img_list:
+                    if img_list is not None:
+                        if filename.split("/")[-1].split(".")[0] in img_list:
+                            futures.append(executor.submit(process_rows, filename, rows))
+                            num_reads += 1
+                            if num_reads == args.number:
+                                break
+                        else:
+                            num_skipped += 1
+                            continue
+                    else:
                         futures.append(executor.submit(process_rows, filename, rows))
                         num_reads += 1
                         if num_reads == args.number:
                             break
-                    else:
-                        num_skipped += 1
-                        continue
 
                 print("Skipped a total of " + str(num_skipped) + " images")
                 for done in cf.as_completed(futures):
-                    rows, fn = done.result()
-                    fn = fn.split("/")[-1]
-                    progress_file.write(fn + '\n')
-                    fn_path = os.path.join(args.output, fn.split(".")[0])
-                    if not os.path.exists(fn_path):
-                        os.mkdir(fn_path)
-                    for row in rows:
-                        for field in row[0]:
-                            field_name = os.path.join(fn_path, str(row[1]) + "_" + str(field[1]) + fn)
-                            cv2.imwrite(field_name, field[0])
-
-                    futures.remove(done)
-                    completed += 1
-                    if completed % 10 == 0:
-                        print(str(completed / num_reads * 100) + "%")
+                    completed = handle_done(args, completed, done, futures, num_reads, progress_file)
                     if completed == num_reads:
                         break
 
                 print("--- " + str(time.time() - start_time) + " ---")
 
 
-if __name__ == '__main__':
+def handle_done(args, completed, done, futures, num_reads, progress_file):
+    rows, fn = done.result()
+    fn = fn.split(os.path.sep)[-1]
+    progress_file.write(fn + '\n')
+    write_field_image(args, fn, rows)
+    futures.remove(done)
+    completed += 1
+    if completed % 10 == 0:
+        print(str(completed / num_reads * 100) + "%")
+    return completed
+
+
+def write_field_image(args, fn, rows):
+    fn_path = os.path.join(args.output, fn.split(".")[0])
+    if not os.path.exists(fn_path):
+        os.mkdir(fn_path)
+    for row in rows:
+        for field in row[0]:
+            field_name = os.path.join(fn_path, str(row[1]) + "_" + str(field[1]) + fn)
+            cv2.imwrite(field_name, field[0])
+
+
+def main():
     arg_parser = argparse.ArgumentParser(
         description="Extract fields from the given image using precalculated coordinates")
     arg_parser.add_argument("coordinate_file", type=str, help="path to the coordinate file")
@@ -627,10 +372,16 @@ if __name__ == '__main__':
     arg_parser.add_argument("--progress_file", type=str,
                             help="location of progress file, will be created if it does not exist",
                             default="progress.txt")
+    arg_parser.add_argument("--image_range", "-r", nargs='+',
+                            help="Specify a range fsxxxx fsyyyy to process all images in the given range")
 
     args = arg_parser.parse_args()
     _tmp = []
     for num in args.cols_number:
         _tmp.append(int(num))
     args.cols_number = _tmp
+    run(args)
+
+
+if __name__ == '__main__':
     main()
