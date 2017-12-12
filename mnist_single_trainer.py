@@ -74,8 +74,8 @@ def convDeepnn(x):
 
     keep_prob = tf.placeholder(tf.float32)
     h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
-    W_fc2 = weight_variable([2048, 1000])
-    b_fc2 = bias_variable([1000])
+    W_fc2 = weight_variable([2048, 1001])
+    b_fc2 = bias_variable([1001])
 
     y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
 
@@ -84,7 +84,7 @@ def convDeepnn(x):
 
 def run(args):
     x = tf.placeholder(tf.float32, [None, 128, 128], name='x')
-    y_ = tf.placeholder(tf.int64, [None, 1000], name='y_')
+    y_ = tf.placeholder(tf.int64, [None, 1001], name='y_')
     y_conv, keep_prob = convDeepnn(x)
     cross_entropy = tf.reduce_mean(
         tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv))
@@ -112,7 +112,8 @@ def run(args):
 
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
-            saver.restore(sess, tf.train.latest_checkpoint('model/'))
+            if tf.train.latest_checkpoint("model/"):
+                saver.restore(sess, tf.train.latest_checkpoint('model/'))
             for i in range(200000):
 
                 offset = (i * batch_size) % (y_train.shape[0] - batch_size)
