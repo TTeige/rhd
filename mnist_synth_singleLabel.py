@@ -64,7 +64,7 @@ def create_dataset(width, height, max_digits, scale, new_height, new_width, data
     new_images, new_labels = generate_digit_sequences(images, labels, dataset_size,
                                                       height, width, max_digits, scale, new_width, new_height)
 
-    boxes = [0 for _ in range(1000)]
+    boxes = [0 for _ in range(1001)]
     for label_range in new_labels:
         for i, label in enumerate(label_range):
             if label != 0:
@@ -85,6 +85,8 @@ def concat_labels(labels, num_images):
     new_label = ""
     for i in range(num_images):
         if i < len(labels):
+            if labels[i] == 0 and i == 0 and len(labels) > 1:
+                return -1
             new_label += str(labels[i])
 
     return int(new_label)
@@ -95,7 +97,7 @@ def generate_digit_sequences(data, labels, n, height, width, max_digits, scale, 
     """
     # Initialize numpy arrays
     images = np.zeros(shape=(n, height, width), dtype=np.uint8)
-    generated_labels = np.zeros(shape=(n, 1000), dtype=np.int)
+    generated_labels = np.zeros(shape=(n, 1001), dtype=np.int)
 
     # Number of training examples of each sequence length
     n_samples = n / max_digits
@@ -106,16 +108,19 @@ def generate_digit_sequences(data, labels, n, height, width, max_digits, scale, 
         # Pick n_samples images
         n_samples = int(n_samples)
         for j in range((i - 1) * n_samples, i * n_samples):
-            if random.random() < 0.05:
+            if random.random() < 1000 / n:
                 images[j] = np.ones(shape=(height, width), dtype=np.uint8)
-                generated_labels[j][1000-1] = 1
+                generated_labels[j][1001-1] = 1
             else:
                 # Select i random digits from the original dataset
                 selection = random.sample(range(0, len(data)), i)
 
+                new_label = concat_labels(labels[selection], max_digits)
+
+                if new_label != -1:
+                    generated_labels[j][new_label] = 1
+                    images[j] = concat_images(data[selection], width, height, scale, new_width, new_height)
                 # Concatenate the digits and labels from
-                images[j] = concat_images(data[selection], width, height, scale, new_width, new_height)
-                generated_labels[j][concat_labels(labels[selection], max_digits)] = 1
 
     # Return the new dataset
     return images, generated_labels
@@ -155,7 +160,7 @@ def run():
     max_digits = 3
     scale = 1
     new_height, new_width = 28, 28
-    dataset_size = 400000
+    dataset_size = 200000
 
     create_dataset(width, height, max_digits, scale, new_height, new_width, dataset_size)
 
