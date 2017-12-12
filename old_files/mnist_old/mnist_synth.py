@@ -52,7 +52,7 @@ height, width = 64, 64
 # Maximum number of digits
 max_digits = 3
 
-# Scale the origina images down to 45% (12x12 pixels)
+# Scale the original images down to 45% (12x12 pixels)
 scale = 0.45
 
 # New height and width of the scaled images
