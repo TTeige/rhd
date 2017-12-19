@@ -16,7 +16,7 @@ def run(args):
 
 def main():
     arg_parser = argparse.ArgumentParser(
-        description="Extract fields from the given image using precalculated coordinates")
+        description="Extract fields from the given image using pre-calculated coordinates")
     arg_parser.add_argument("coordinate_file", type=str, help="path to the coordinate file")
     arg_parser.add_argument("--img_path_mod", "-m", metavar="M", type=str, default="",
                             help="replaces the share= in the coordinate file and replaces it with the given argument")
@@ -25,7 +25,7 @@ def main():
                             default="all")
     arg_parser.add_argument("--process_images", "-P", action="store_true", help="convert and filter images")
     arg_parser.add_argument("--cols_number", "-c", nargs='+',
-                            help="specifies the column index for which to search for. "
+                            help="specifies the column indexes to search for. "
                                  "Defined in a space separated list 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26",
                             default=[])
     arg_parser.add_argument("--cols_name", "-C", nargs='+',

@@ -60,7 +60,7 @@ class ParallelExecutor:
 
     def skip_image(self, img_filename):
         if img_filename == "":
-            print("Something went wrong with reading the image filename")
+            print("Something went wrong with reading the image filename from the coordinate file")
             return True
         if self.completed_images.get(img_filename.split(os.path.sep)[-1]):
             print("Skipping " + img_filename)
