@@ -14,7 +14,6 @@ class CoordinateFileReader:
         first_line = self.first_line
 
         rows = []
-        filename = ""
         while True:
 
             second_line = self.file.readline()
