@@ -6,6 +6,7 @@ class CoordinateFileReader:
         self.filename = filename
         self.mod = mod
         self.img_range = img_range
+        assert len(self.img_range) % 2 == 0
         self.file = None
         self.first_line = None
 
@@ -37,12 +38,13 @@ class CoordinateFileReader:
         proper_img_list = []
         count = 0
         # img_list_start = ["fs10061402170436"]
-        # img_list_end = ["fs10061402177225"]
-        start_num = int(self.img_range[0].split('fs')[-1])
-        end_num = int(self.img_range[1].split('fs')[-1])
-        for index in range(start_num, end_num):
-            proper_img_list.append("fs" + str(index))
-            count += 1
+        # img_list_end =   ["fs10061402177225"]
+        for i in range(0, len(self.img_range), 2):
+            start_num = int(self.img_range[i].split('fs')[-1])
+            end_num = int(self.img_range[i + 1].split('fs')[-1])
+            for index in range(start_num, end_num):
+                proper_img_list.append("fs" + str(index))
+                count += 1
 
         return proper_img_list
 
