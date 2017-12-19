@@ -10,7 +10,7 @@ def run(args):
     with CoordinateFileReader(args.coordinate_file, args.img_path_mod, args.image_range) as cf_reader:
         with ProgressFileHandler(args.progress_file) as pf_handler:
             img_parser = ImageParser(args)
-            executor = ParallelExecutor(cf_reader, img_parser, pf_handler, args)
+            executor = ParallelExecutor(cf_reader, img_parser, pf_handler, args.workers, args.number, args.output)
             executor.run()
 
 

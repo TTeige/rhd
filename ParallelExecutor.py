@@ -4,13 +4,13 @@ import concurrent.futures as cf
 
 
 class ParallelExecutor:
-    def __init__(self, cf_reader, img_parser, pf_handler, args):
+    def __init__(self, cf_reader, img_parser, pf_handler, workers, num_to_do, output_dir):
         self.cf_reader = cf_reader
         self.img_parser = img_parser
         self.pf_handler = pf_handler
-        self.workers = args.workers
-        self.num_to_do = args.number
-        self.output_dir = args.output
+        self.workers = workers
+        self.num_to_do = num_to_do
+        self.output_dir = output_dir
         self.num_reads = 0
         self.num_skipped = 0
         self.num_completed = 0
