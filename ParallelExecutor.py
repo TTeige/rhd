@@ -27,21 +27,21 @@ class ParallelExecutor:
 
         with cf.ProcessPoolExecutor(max_workers=self.workers) as executor:
             while self.cf_reader.continue_reading():
-                rows, filename = self.cf_reader.read_full_image_lines()
-                if self.skip(filename):
+                rows, img_filename = self.cf_reader.read_full_image_lines()
+                if self.skip_image(img_filename):
                     continue
                 if self.img_list is not None:
-                    if not self.submit_listed_img(executor, filename, rows):
+                    if not self.submit_listed_img(executor, img_filename, rows):
                         break
                 else:
-                    if not self.submit_and_continue(executor, filename, rows):
+                    if not self.submit_and_continue(executor, img_filename, rows):
                         break
 
             self.handle_all_submitted(start_time)
 
-    def submit_listed_img(self, executor, filename, rows):
-        if filename.split(os.path.sep)[-1].split(".")[0] in self.img_list:
-            if not self.submit_and_continue(executor, filename, rows):
+    def submit_listed_img(self, executor, img_filename, rows):
+        if img_filename.split(os.path.sep)[-1].split(".")[0] in self.img_list:
+            if not self.submit_and_continue(executor, img_filename, rows):
                 return False
         else:
             self.num_skipped += 1
@@ -58,19 +58,19 @@ class ParallelExecutor:
         if self.num_completed % 10 == 0:
             print(str(self.num_completed / num_reads * 100) + "%")
 
-    def skip(self, filename):
-        if filename == "":
+    def skip_image(self, img_filename):
+        if img_filename == "":
             print("Something went wrong with reading the image filename")
             return True
-        if self.completed_images.get(filename.split(os.path.sep)[-1]):
-            print("Skipping " + filename)
+        if self.completed_images.get(img_filename.split(os.path.sep)[-1]):
+            print("Skipping " + img_filename)
             self.num_skipped += 1
             return True
 
         return False
 
-    def submit_and_continue(self, executor, filename, rows):
-        self.futures.append(executor.submit(self.img_parser.process_rows, filename, rows))
+    def submit_and_continue(self, executor, img_filename, rows):
+        self.futures.append(executor.submit(self.img_parser.process_rows, img_filename, rows))
         self.num_reads += 1
         if self.num_reads == self.num_to_do:
             return False
