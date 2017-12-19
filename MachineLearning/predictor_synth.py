@@ -9,10 +9,10 @@ def convert_img(img):
     img_data = np.array(img, dtype=np.float32)
     img_data = img_data.flatten()
     img_data = [float(x) * 1.0 / 255.0 for x in img_data]
-    img_data = np.reshape(img_data, [64, 64])
+    img_data = np.reshape(img_data, [64, 64]).astype(np.float32)
     img_data = [img_data]
-    img_data = np.expand_dims(img_data, axis=3)
-    img_data = img_data.tolist()
+    # img_data = np.expand_dims(img_data, axis=3)
+    # img_data = img_data.tolist()
     return img_data
 
 
@@ -27,16 +27,14 @@ def run():
         print("Model restored")
         graph = tf.get_default_graph()
         x = graph.get_tensor_by_name('x:0')
-        y_pred_cls = graph.get_tensor_by_name('y_pred_cls:0')
+        pred = graph.get_tensor_by_name('predictor:0')
 
-        w_c3 = graph.get_tensor_by_name('w_fc1:0')
-        #
-        predictor = tf.transpose(tf.argmax(w_c3))
+        img = convert_img(cv2.imread("/mnt/remote/extracted_fields/fs10061402175187/4_27fs10061402175187.jpg", 0))
 
         feed_dict = {
-            x: convert_img(cv2.imread("/mnt/remote/extracted_fields/fs10061402175187/4_27fs10061402175187.jpg", 0))
+            x: img
         }
-        print(session.run(predictor, feed_dict=feed_dict))
+        print(session.run(pred, feed_dict=feed_dict))
 
 
 if __name__ == '__main__':
