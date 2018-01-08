@@ -2,9 +2,8 @@ import argparse
 
 from CoordinateFileReader import CoordinateFileReader
 from ProgressFileHandler import ProgressFileHandler
-
 from ImageParser import ImageParser
-from ImageParser.ParallelExecutor import ParallelExecutor
+from ParallelExecutor import ParallelExecutor
 
 
 def run(args):
