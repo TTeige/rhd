@@ -6,7 +6,8 @@ class CoordinateFileReader:
         self.filename = filename
         self.mod = mod
         self.img_range = img_range
-        assert len(self.img_range) % 2 == 0
+        if self.img_range:
+            assert len(self.img_range) % 2 == 0
         self.file = None
         self.first_line = None
 
