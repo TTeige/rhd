@@ -69,7 +69,6 @@ def main():
                             default="progress.txt")
     arg_parser.add_argument("--image_range", "-r", nargs='+', type=str,
                             help="Specify a range fsxxxx fsyyyy to process all images in the given range")
-
     args = arg_parser.parse_args()
     _tmp = []
     for num in args.cols_number:
