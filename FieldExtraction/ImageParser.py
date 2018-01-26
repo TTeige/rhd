@@ -105,15 +105,15 @@ class ImageParser:
         #         break
 
         gray_channel = cv2.bitwise_not(gray_channel)
+        #
+        # gray_channel = cv2.resize(gray_channel, (60, 60), interpolation=cv2.INTER_AREA)
+        #
+        # reshaped = np.full((64, 64), 255, dtype='uint8')
+        # p = np.array(gray_channel)
+        # x_off = y_off = 2
+        # reshaped[x_off:p.shape[0] + x_off, y_off:p.shape[1] + y_off] = p
 
-        gray_channel = cv2.resize(gray_channel, (60, 60), interpolation=cv2.INTER_AREA)
-
-        reshaped = np.full((64, 64), 255, dtype='uint8')
-        p = np.array(gray_channel)
-        x_off = y_off = 2
-        reshaped[x_off:p.shape[0] + x_off, y_off:p.shape[1] + y_off] = p
-
-        return reshaped
+        return gray_channel
 
     @staticmethod
     def _extract_field(img, row_1, row_2, i):
