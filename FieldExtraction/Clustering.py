@@ -181,7 +181,14 @@ class GaussianNormalDistributionCluster:
 # if __name__ == '__main__':
 #     run()
 
+
 def execute(root, file):
+    """
+    Function to handle the launching of a parallel task
+    :param root: root directory
+    :param file: name of the file
+    :return: list of images separated, name of the new folder, name of the new file
+    """
     gnc = GaussianNormalDistributionCluster()
     path = os.path.join(root, file)
     image = gnc.load_image(path)
@@ -208,13 +215,22 @@ def execute(root, file):
         print(e)
         return None, None, None
 
+
 def handle_done(done):
+    """
+    Function to handle the output of a parallel task
+    :param done: Handle to the concurrent.future task object
+    :return:
+    """
     new_images, new_folder, file = done.result()
+    if new_images is None or new_folder is None or file is None:
+        return
     if not os.path.exists(new_folder):
         os.mkdir(new_folder)
     for i, im in enumerate(new_images):
         new_image_filename = os.path.join(str(new_folder), str(i) + "_" + file)
         cv2.imwrite(new_image_filename, im)
+
 
 def run_parallel():
     np.random.seed(0)
@@ -229,6 +245,7 @@ def run_parallel():
         for done in cf.as_completed(futures):
             handle_done(done)
         print("--- " + str(time.time() - start_time) + " ---")
+
 
 if __name__ == '__main__':
     run_parallel()
