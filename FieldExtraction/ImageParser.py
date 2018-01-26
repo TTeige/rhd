@@ -85,24 +85,24 @@ class ImageParser:
         gray_channel = cv2.split(output_hsv)[2]
         retval, gray_channel = cv2.threshold(gray_channel, 100, 255, cv2.THRESH_BINARY)
         gray_channel = cv2.GaussianBlur(gray_channel, (3, 3), 0)
-        for i in range(0, gray_channel.shape[1]):
-            done = False
-            for col in gray_channel[:, i]:
-                if col != 0:
-                    gray_channel = np.delete(gray_channel, np.s_[:i], axis=1)
-                    done = True
-                    break
-            if done:
-                break
-        for i in range(gray_channel.shape[1] - 1, 0, -1):
-            done = False
-            for col in gray_channel[:, i]:
-                if col != 0:
-                    gray_channel = np.delete(gray_channel, np.s_[i:], axis=1)
-                    done = True
-                    break
-            if done:
-                break
+        # for i in range(0, gray_channel.shape[1]):
+        #     done = False
+        #     for col in gray_channel[:, i]:
+        #         if col != 0:
+        #             gray_channel = np.delete(gray_channel, np.s_[:i], axis=1)
+        #             done = True
+        #             break
+        #     if done:
+        #         break
+        # for i in range(gray_channel.shape[1] - 1, 0, -1):
+        #     done = False
+        #     for col in gray_channel[:, i]:
+        #         if col != 0:
+        #             gray_channel = np.delete(gray_channel, np.s_[i:], axis=1)
+        #             done = True
+        #             break
+        #     if done:
+        #         break
 
         gray_channel = cv2.bitwise_not(gray_channel)
 
