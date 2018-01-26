@@ -231,11 +231,17 @@ def run_parallel(path):
     futures = []
     num = 0
     num_read = 0
+    # The following is not big data safe, could run out of memory, best would be to create a stream, but python....
+    image_strings = []
+    # All usage of image strings might be volatile
     with cf.ProcessPoolExecutor(max_workers=8) as executor:
         for root, subdirs, files in os.walk(path):
             for file in files:
                 num_read += 1
-                futures.append(executor.submit(execute(root, file, args.output)))
+                image_strings.append((root, file))
+
+        for name in image_strings:
+            futures.append(executor.submit(execute(name[0], name[1], args.output)))
 
         for done in cf.as_completed(futures):
             handle_done(done)
