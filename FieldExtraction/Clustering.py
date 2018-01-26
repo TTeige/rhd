@@ -59,7 +59,7 @@ class GaussianNormalDistributionCluster:
         rows, cols = self.image.shape
 
         np.random.seed(0)
-        affine = np.array([[1, 0, 0], [-0.1, 1, 0], [0, 0, 1]])
+        affine = np.array([[1, 0, 0], [-0.2, 1, 0], [0, 0, 1]])
         img = affine_transform(self.image, affine, cval=255)
         img_flat = img.flatten()
         img_flat = [v / 255 for v in img_flat]
