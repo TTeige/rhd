@@ -23,7 +23,7 @@ class GaussianNormalDistributionCluster:
         """
         self.image = None
         self.components = num_components
-        self.shape = (26, 26)
+        self.shape = (28, 28)
 
     @staticmethod
     def gaussian(x, mu, sig, weight):
@@ -56,7 +56,7 @@ class GaussianNormalDistributionCluster:
         """
         if self.image is None:
             raise ValueError
-        w, h = self.image.shape
+        rows, cols = self.image.shape
 
         np.random.seed(0)
         affine = np.array([[1, 0, 0], [-0.1, 1, 0], [0, 0, 1]])
@@ -67,7 +67,7 @@ class GaussianNormalDistributionCluster:
         x_density = []
         for i in range(0, len(img_flat)):
             if img_flat[i] < 0.1:
-                x_density.append(np.array([i % w]))
+                x_density.append(np.array([i % cols]))
 
         return np.array(x_density)
 
@@ -85,7 +85,7 @@ class GaussianNormalDistributionCluster:
         return minims
 
     @staticmethod
-    def render_hist(x_density, num_bins=128):
+    def render_hist(x_density, num_bins=28):
         """
         Render method for a histogram
         :param x_density: list of x-axis pixel locations
@@ -123,26 +123,25 @@ class GaussianNormalDistributionCluster:
 
         mu = gmm.means_.flatten()
         sig = gmm.covariances_.flatten()
-        combined = []
-        for i in range(0, len(mu)):
-            combined.append([mu[i], sig[i], gmm.weights_[i]])
         gausses = []
-        for v in combined:
-            g = self.gaussian(np.arange(self.image.shape[0]), v[0], v[1], v[2])
+        for i in range(0, len(mu)):
+            g = self.gaussian(np.arange(self.image.shape[1]), mu[i], sig[i], gmm.weights_[i])
             gausses.append(g)
         gausses = np.array(gausses)
         sum_g = gausses.sum(axis=0)
 
         return sum_g
 
-    def resize_image(self, images):
+    def resize_images(self, images):
         completed = []
         for image in images:
-            reshaped = np.full(self.shape, 255, dtype='uint8')
-            p = np.array(image)
             x_off = y_off = 1
+            img = cv2.resize(image, (self.shape[0] - y_off, self.shape[1] - x_off), interpolation=cv2.INTER_AREA)
+            reshaped = np.full(self.shape, 255, dtype='uint8')
+            p = np.array(img)
             reshaped[x_off:p.shape[0] + x_off, y_off:p.shape[1] + y_off] = p
             completed.append(reshaped)
+        return completed
 
     def split_image(self, image, split_points):
 
@@ -152,30 +151,32 @@ class GaussianNormalDistributionCluster:
         new1 = np.array(new1)
         new2 = np.array(new2)
         new3 = np.array(new3)
-        return self.resize_image([new1, new2, new3])
+        return self.resize_images([new1, new2, new3])
 
 
-# def run():
-#     np.random.seed(0)
-#     gnc = GaussianNormalDistributionCluster()
-#     img_name = "8_27fs10061408024922.jpg"
-#     folder = "/mnt/remote/Yrke/spesifikke_felt/555/"
-#     full_name = os.path.join(folder, img_name)
-#     img = gnc.load_image(full_name)
-#     x_density = gnc.get_x_density()
-#     gnc.render_hist(x_density)
-#     sum_g = gnc.get_summed_gaussian(x_density)
-#     gnc.render_dist(sum_g)
-#     mins = gnc.get_minimas(sum_g)
-#     cv2.line(img, (mins[0][0], img.shape[1]), (mins[0][0], 0), (0, 0, 0))
-#     cv2.line(img, (mins[0][1], img.shape[1]), (mins[0][1], 0), (0, 0, 0))
-#     plt.show()
-#     new_images = gnc.split_image(img, np.array([mins[0][0], mins[0][1]]))
-#     cv2.imshow("0", new_images[0])
-#     cv2.imshow("1", new_images[1])
-#     cv2.imshow("2", new_images[2])
-#     cv2.imshow("original", img)
-#     cv2.waitKey()
+def run():
+    np.random.seed(0)
+    gnc = GaussianNormalDistributionCluster()
+    img_name = "2_27fs10061408000833.jpg"
+    folder = "/mnt/remote/Yrke/felt/fs10061408000833"
+    full_name = os.path.join(folder, img_name)
+    img = gnc.load_image(full_name)
+    x_density = gnc.get_x_density()
+    gnc.render_hist(x_density)
+    sum_g = gnc.get_summed_gaussian(x_density)
+    gnc.render_dist(sum_g)
+    mins = gnc.get_minimas(sum_g)
+    plt.show()
+    cv2.line(img, (mins[0][0], img.shape[1]), (mins[0][0], 0), (0, 0, 0))
+    cv2.line(img, (mins[0][1], img.shape[1]), (mins[0][1], 0), (0, 0, 0))
+    new_images = gnc.split_image(img, np.array([mins[0][0], mins[0][1]]))
+    cv2.imshow("0", new_images[0])
+    cv2.imshow("1", new_images[1])
+    cv2.imshow("2", new_images[2])
+    cv2.imshow("original", img)
+    cv2.waitKey()
+
+
 #
 #
 # if __name__ == '__main__':
@@ -248,4 +249,5 @@ def run_parallel():
 
 
 if __name__ == '__main__':
-    run_parallel()
+    run()
+    # run_parallel()
