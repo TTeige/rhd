@@ -229,14 +229,20 @@ def run_parallel(path):
     np.random.seed(0)
     start_time = time.time()
     futures = []
-
+    num = 0
+    num_read = 0
     with cf.ProcessPoolExecutor(max_workers=8) as executor:
         for root, subdirs, files in os.walk(path):
             for file in files:
+                num_read += 1
                 futures.append(executor.submit(execute(root, file, args.output)))
 
         for done in cf.as_completed(futures):
             handle_done(done)
+            futures.remove(done)
+            num += 1
+            if num % 100 == 0:
+                print("Number of images segmented is: {} out of a total of {}".format(num, num_read))
         print("--- " + str(time.time() - start_time) + " ---")
 
 
