@@ -6,6 +6,8 @@ import math
 from scipy.ndimage import affine_transform
 from scipy.signal import argrelmin
 import os
+import concurrent.futures as cf
+import time
 
 
 class GaussianNormalDistributionCluster:
@@ -21,6 +23,7 @@ class GaussianNormalDistributionCluster:
         """
         self.image = None
         self.components = num_components
+        self.shape = (26, 26)
 
     @staticmethod
     def gaussian(x, mu, sig, weight):
@@ -132,6 +135,15 @@ class GaussianNormalDistributionCluster:
 
         return sum_g
 
+    def resize_image(self, images):
+        completed = []
+        for image in images:
+            reshaped = np.full(self.shape, 255, dtype='uint8')
+            p = np.array(image)
+            x_off = y_off = 1
+            reshaped[x_off:p.shape[0] + x_off, y_off:p.shape[1] + y_off] = p
+            completed.append(reshaped)
+
     def split_image(self, image, split_points):
 
         new1 = [row[:split_points[0]] for row in image]
@@ -140,7 +152,7 @@ class GaussianNormalDistributionCluster:
         new1 = np.array(new1)
         new2 = np.array(new2)
         new3 = np.array(new3)
-        return [new1, new2, new3]
+        return self.resize_image([new1, new2, new3])
 
 
 # def run():
@@ -169,39 +181,54 @@ class GaussianNormalDistributionCluster:
 # if __name__ == '__main__':
 #     run()
 
+def execute(root, file):
+    gnc = GaussianNormalDistributionCluster()
+    path = os.path.join(root, file)
+    image = gnc.load_image(path)
+    print("Creating gaussian normal distributions for {}".format(file))
+    try:
+        mins = gnc.get_minimas()
+        if mins is None:
+            return None, None, None
+    except ValueError:
+        # Unsure of what exactly happens here, but the x_density vector is only a single dimension
+        # which causes the GMM to fail. This can happen if there is only a single row containing pixels, or none
+        # These images are however not relevant and can be skipped.
+
+        print(ValueError)
+        return None, None, None
+
+    try:
+        new_images = gnc.split_image(image, np.array([mins[0][0], mins[0][1]]))
+        new_folder = os.path.join(os.path.sep, "mnt", "remote", "Yrke", "enkelt_siffer", file.split(".jpg")[0])
+        return new_images, new_folder, file
+    except IndexError as e:
+        # Only one minima is found, this is the wrong result for the profession field. Should be two minimas
+        # So these images are just skipped.
+        print(e)
+        return None, None, None
+
+def handle_done(done):
+    new_images, new_folder, file = done.result()
+    if not os.path.exists(new_folder):
+        os.mkdir(new_folder)
+    for i, im in enumerate(new_images):
+        new_image_filename = os.path.join(str(new_folder), str(i) + "_" + file)
+        cv2.imwrite(new_image_filename, im)
+
 def run_parallel():
     np.random.seed(0)
-    gnc = GaussianNormalDistributionCluster()
-    for root, subdirs, files in os.walk("/mnt/remote/Yrke/spesifikke_felt/"):
-        for file in files:
-            path = os.path.join(root, file)
-            image = gnc.load_image(path)
-            print("Creating gaussian normal distributions for {}".format(file))
-            try:
-                mins = gnc.get_minimas()
-                if mins is None:
-                    continue
-            except ValueError:
-                # Unsure of what exactly happens here, but the x_density vector is only a single dimension
-                # which causes the GMM to fail. This can happen if there is only a single row containing pixels, or none
-                # These images are however not relevant and can be skipped.
+    start_time = time.time()
+    futures = []
 
-                print(ValueError)
-                continue
+    with cf.ProcessPoolExecutor(max_workers=8) as executor:
+        for root, subdirs, files in os.walk("/mnt/remote/Yrke/spesifikke_felt/"):
+            for file in files:
+                futures.append(executor.submit(execute(root, file)))
 
-            try:
-                new_images = gnc.split_image(image, np.array([mins[0][0], mins[0][1]]))
-                new_folder = os.path.join(os.path.sep, "mnt", "remote", "Yrke", "enkelt_siffer", file.split(".jpg")[0])
-                if not os.path.exists(new_folder):
-                    os.mkdir(new_folder)
-                for i, im in enumerate(new_images):
-                    new_image_filename = os.path.join(str(new_folder), str(i) + "_" + file)
-                    cv2.imwrite(new_image_filename, im)
-            except IndexError as e:
-                # Only one minima is found, this is the wrong result for the profession field. Should be two minimas
-                # So these images are just skipped.
-                print(e)
-
+        for done in cf.as_completed(futures):
+            handle_done(done)
+        print("--- " + str(time.time() - start_time) + " ---")
 
 if __name__ == '__main__':
     run_parallel()
