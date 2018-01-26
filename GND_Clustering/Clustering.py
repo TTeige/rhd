@@ -8,6 +8,7 @@ from scipy.signal import argrelmin
 import os
 import concurrent.futures as cf
 import time
+import argparse
 
 
 class GaussianNormalDistributionCluster:
@@ -154,13 +155,10 @@ class GaussianNormalDistributionCluster:
         return self.resize_images([new1, new2, new3])
 
 
-def run():
+def run_test(path):
     np.random.seed(0)
     gnc = GaussianNormalDistributionCluster()
-    img_name = "2_27fs10061408000833.jpg"
-    folder = "/mnt/remote/Yrke/felt/fs10061408000833"
-    full_name = os.path.join(folder, img_name)
-    img = gnc.load_image(full_name)
+    img = gnc.load_image(path)
     x_density = gnc.get_x_density()
     gnc.render_hist(x_density)
     sum_g = gnc.get_summed_gaussian(x_density)
@@ -169,6 +167,7 @@ def run():
     plt.show()
     cv2.line(img, (mins[0][0], img.shape[1]), (mins[0][0], 0), (0, 0, 0))
     cv2.line(img, (mins[0][1], img.shape[1]), (mins[0][1], 0), (0, 0, 0))
+    cv2.imwrite("example.jpg", img)
     new_images = gnc.split_image(img, np.array([mins[0][0], mins[0][1]]))
     cv2.imshow("0", new_images[0])
     cv2.imshow("1", new_images[1])
@@ -176,14 +175,7 @@ def run():
     cv2.imshow("original", img)
     cv2.waitKey()
 
-
-#
-#
-# if __name__ == '__main__':
-#     run()
-
-
-def execute(root, file):
+def execute(root, file, output):
     """
     Function to handle the launching of a parallel task
     :param root: root directory
@@ -208,7 +200,7 @@ def execute(root, file):
 
     try:
         new_images = gnc.split_image(image, np.array([mins[0][0], mins[0][1]]))
-        new_folder = os.path.join(os.path.sep, "mnt", "remote", "Yrke", "enkelt_siffer", file.split(".jpg")[0])
+        new_folder = os.path.join(output, file.split(".jpg")[0])
         return new_images, new_folder, file
     except IndexError as e:
         # Only one minima is found, this is the wrong result for the profession field. Should be two minimas
@@ -233,21 +225,35 @@ def handle_done(done):
         cv2.imwrite(new_image_filename, im)
 
 
-def run_parallel():
+def run_parallel(path):
     np.random.seed(0)
     start_time = time.time()
     futures = []
 
     with cf.ProcessPoolExecutor(max_workers=8) as executor:
-        for root, subdirs, files in os.walk("/mnt/remote/Yrke/spesifikke_felt/"):
+        for root, subdirs, files in os.walk(path):
             for file in files:
-                futures.append(executor.submit(execute(root, file)))
+                futures.append(executor.submit(execute(root, file, args.output)))
 
         for done in cf.as_completed(futures):
             handle_done(done)
         print("--- " + str(time.time() - start_time) + " ---")
 
 
+def handle_main(args):
+    if args.test:
+        run_test(args.path)
+    else:
+        run_parallel(args.path)
+
+
 if __name__ == '__main__':
-    run()
-    # run_parallel()
+    arg = argparse.ArgumentParser("Extract individual digits from image")
+    arg.add_argument("-t", "--test", action="store_true", help="Run the program in test_mode")
+    arg.add_argument("-p", "--path", type=str,
+                     help="path to root directory if not running test. If test, full path to image")
+    arg.add_argument("-o", "--output", type=str, help="output path")
+    args = arg.parse_args()
+    handle_main(args)
+
+# "/mnt/remote/Yrke/spesifikke_felt/"
