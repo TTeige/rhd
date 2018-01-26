@@ -68,14 +68,16 @@ class GaussianNormalDistributionCluster:
 
         return np.array(x_density)
 
-    def find_minimas(self, summed_gaussian=None):
+    def get_minimas(self, summed_gaussian=None):
         """
         Returns local minimas of the gaussian function
         :param summed_gaussian: sum of gaussian normal distributions. If None, the method will retrieve a summed gaussian for the given number of components
-        :return: local minimas
+        :return: local minimas. None if the image contains no valid pixels, see method get_x_density().
         """
         if summed_gaussian is None:
             summed_gaussian = self.get_summed_gaussian()
+            if summed_gaussian is None:
+                return None
         minims = argrelmin(summed_gaussian)
         return minims
 
@@ -103,11 +105,15 @@ class GaussianNormalDistributionCluster:
         Creates and summarizes the gaussian normal distributions
         :param x_density: list of pixel locations on the x-axis
         :param init_weight: initial weight for the distributions
-        :return: summed gaussian distribution
+        :return: summed gaussian distribution. If None, no valid (normalized pixels < 0.1) pixels are in the image
         """
 
         if x_density is None:
             x_density = self.get_x_density()
+
+        if len(x_density) == 0:
+            return None
+
         weights = np.full(self.components, init_weight)
         gmm = GaussianMixture(n_components=self.components, weights_init=weights)
         gmm.fit(x_density)
@@ -126,6 +132,17 @@ class GaussianNormalDistributionCluster:
 
         return sum_g
 
+    def split_image(self, image, split_points):
+
+        new1 = [row[:split_points[0]] for row in image]
+        new2 = [row[split_points[0]:split_points[1]] for row in image]
+        new3 = [row[split_points[1]:] for row in image]
+        new1 = np.array(new1)
+        new2 = np.array(new2)
+        new3 = np.array(new3)
+        return [new1, new2, new3]
+
+
 # def run():
 #     np.random.seed(0)
 #     gnc = GaussianNormalDistributionCluster()
@@ -137,12 +154,54 @@ class GaussianNormalDistributionCluster:
 #     gnc.render_hist(x_density)
 #     sum_g = gnc.get_summed_gaussian(x_density)
 #     gnc.render_dist(sum_g)
-#     mins = gnc.find_minimas(sum_g)
+#     mins = gnc.get_minimas(sum_g)
 #     cv2.line(img, (mins[0][0], img.shape[1]), (mins[0][0], 0), (0, 0, 0))
 #     cv2.line(img, (mins[0][1], img.shape[1]), (mins[0][1], 0), (0, 0, 0))
 #     plt.show()
-#
+#     new_images = gnc.split_image(img, np.array([mins[0][0], mins[0][1]]))
+#     cv2.imshow("0", new_images[0])
+#     cv2.imshow("1", new_images[1])
+#     cv2.imshow("2", new_images[2])
+#     cv2.imshow("original", img)
+#     cv2.waitKey()
 #
 #
 # if __name__ == '__main__':
 #     run()
+
+def run_parallel():
+    np.random.seed(0)
+    gnc = GaussianNormalDistributionCluster()
+    for root, subdirs, files in os.walk("/mnt/remote/Yrke/spesifikke_felt/"):
+        for file in files:
+            path = os.path.join(root, file)
+            image = gnc.load_image(path)
+            print("Creating gaussian normal distributions for {}".format(file))
+            try:
+                mins = gnc.get_minimas()
+                if mins is None:
+                    continue
+            except ValueError:
+                # Unsure of what exactly happens here, but the x_density vector is only a single dimension
+                # which causes the GMM to fail. This can happen if there is only a single row containing pixels, or none
+                # These images are however not relevant and can be skipped.
+
+                print(ValueError)
+                continue
+
+            try:
+                new_images = gnc.split_image(image, np.array([mins[0][0], mins[0][1]]))
+                new_folder = os.path.join(os.path.sep, "mnt", "remote", "Yrke", "enkelt_siffer", file.split(".jpg")[0])
+                if not os.path.exists(new_folder):
+                    os.mkdir(new_folder)
+                for i, im in enumerate(new_images):
+                    new_image_filename = os.path.join(str(new_folder), str(i) + "_" + file)
+                    cv2.imwrite(new_image_filename, im)
+            except IndexError as e:
+                # Only one minima is found, this is the wrong result for the profession field. Should be two minimas
+                # So these images are just skipped.
+                print(e)
+
+
+if __name__ == '__main__':
+    run_parallel()
