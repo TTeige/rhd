@@ -175,6 +175,7 @@ def run_test(path):
     cv2.imshow("original", img)
     cv2.waitKey()
 
+
 def execute(root, file, output):
     """
     Function to handle the launching of a parallel task
@@ -185,7 +186,6 @@ def execute(root, file, output):
     gnc = GaussianNormalDistributionCluster()
     path = os.path.join(root, file)
     image = gnc.load_image(path)
-    print("Creating gaussian normal distributions for {}".format(file))
     try:
         mins = gnc.get_minimas()
         if mins is None:
@@ -249,7 +249,7 @@ def handle_main(args):
 
 if __name__ == '__main__':
     arg = argparse.ArgumentParser("Extract individual digits from image")
-    arg.add_argument("-t", "--test", action="store_true", help="Run the program in test_mode")
+    arg.add_argument("-t", "--test", action="store_true", default=False, help="Run the program in test_mode")
     arg.add_argument("-p", "--path", type=str,
                      help="path to root directory if not running test. If test, full path to image")
     arg.add_argument("-o", "--output", type=str, help="output path")
