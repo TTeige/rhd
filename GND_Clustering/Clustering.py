@@ -241,7 +241,7 @@ def run_parallel(path):
                 image_strings.append((root, file))
 
         for name in image_strings:
-            futures.append(executor.submit(execute(name[0], name[1], args.output)))
+            futures.append(executor.submit(execute, name[0], name[1], args.output))
 
         for done in cf.as_completed(futures):
             handle_done(done)
