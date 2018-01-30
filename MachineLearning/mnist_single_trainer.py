@@ -185,23 +185,25 @@ def run(args):
             pred2 = tf.arg_max(y_conv, 1)
             print(sess.run(pred2, feed_dict))
 
-    def main():
-        arg_parser = argparse.ArgumentParser(
-            description="Predict images at the given path. Model based on a synthetic mnist dataset")
-        arg_parser.add_argument("--images", "-i", type=str,
-                                help="path to root of directory structure that is to be predicted")
-        arg_parser.add_argument("--output", "-o", type=str, help="Output path of csv file containing the predictions")
-        arg_parser.add_argument("--model", "-m", type=str, help="Path to the model that is to be restored", default="")
-        arg_parser.add_argument("--meta_graph", "-M", type=str,
-                                help="Path to the metagraph for restoration of the model",
-                                default="")
-        arg_parser.add_argument("--checkpoint", "-c", type=str, help="Restore from checkpoint if path is provided",
-                                default="")
-        arg_parser.add_argument("--train", "-t", action="store_true",
-                                help="set the program to train on a given dataset")
-        args = arg_parser.parse_args()
-        print(args)
-        run(args)
 
-    if __name__ == '__main__':
-        main()
+def main():
+    arg_parser = argparse.ArgumentParser(
+        description="Predict images at the given path. Model based on a synthetic mnist dataset")
+    arg_parser.add_argument("--images", "-i", type=str,
+                            help="path to root of directory structure that is to be predicted")
+    arg_parser.add_argument("--output", "-o", type=str, help="Output path of csv file containing the predictions")
+    arg_parser.add_argument("--model", "-m", type=str, help="Path to the model that is to be restored", default="")
+    arg_parser.add_argument("--meta_graph", "-M", type=str,
+                            help="Path to the metagraph for restoration of the model",
+                            default="")
+    arg_parser.add_argument("--checkpoint", "-c", type=str, help="Restore from checkpoint if path is provided",
+                            default="")
+    arg_parser.add_argument("--train", "-t", action="store_true",
+                            help="set the program to train on a given dataset")
+    args = arg_parser.parse_args()
+    print(args)
+    run(args)
+
+
+if __name__ == '__main__':
+    main()
