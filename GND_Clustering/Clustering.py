@@ -267,5 +267,3 @@ if __name__ == '__main__':
     arg.add_argument("-o", "--output", type=str, help="output path")
     args = arg.parse_args()
     handle_main(args)
-
-# "/mnt/remote/Yrke/spesifikke_felt/"
