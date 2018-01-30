@@ -106,7 +106,7 @@ def run(args):
     if args.train:
         FLAGS = None
         # Import data
-        mnist = input_data.read_data_sets(FLAGS.data_dir, one_hot=True)
+        mnist = input_data.read_data_sets('../MNIST_data/', one_hot=True)
 
         # Create the model
         x = tf.placeholder(tf.float32, [None, 784])
