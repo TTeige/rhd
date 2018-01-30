@@ -17,10 +17,12 @@ from tensorflow.examples.tutorials.mnist import input_data
 import tensorflow as tf
 import numpy as np
 
+
 def convert_img(img):
     img = img.flatten()
     img = [i / 255 for i in img]
     return img
+
 
 def deepnn(x):
     """deepnn builds the graph for a deep net for classifying digits.
@@ -165,35 +167,32 @@ def run(args):
         with tf.Session() as sess:
             saver = tf.train.Saver()
             saver.restore(sess, tf.train.latest_checkpoint('model/'))
-            img = convert_img(cv2.imread("/mnt/remote/Yrke/enkelt_siffer/2_27fs10061408000849/1_2_27fs10061408000849.jpg", 0))
+            img = convert_img(
+                cv2.imread("/mnt/remote/Yrke/enkelt_siffer/2_27fs10061408000849/1_2_27fs10061408000849.jpg", 0))
 
             x = tf.placeholder(tf.float32, [None, 784])
             y_ = tf.placeholder(tf.float32, [None, 10])
-            pred = np.zeros([1,10])
             y_conv, keep_prob = deepnn(x)
-            accuracy = tf.get_variable("accuracy")
-            feed_dict = {x: img, y_: pred, keep_prob: 1.0}
-            print(accuracy.eval(feed_dict))
+            pred = tf.nn.softmax(y_conv, 1)
+            print(sess.run(pred, feed_dict={x: img, y_: np.zeros([1, 10]), keep_prob: 1.0}))
 
+    def main():
+        arg_parser = argparse.ArgumentParser(
+            description="Predict images at the given path. Model based on a synthetic mnist dataset")
+        arg_parser.add_argument("--images", "-i", type=str,
+                                help="path to root of directory structure that is to be predicted")
+        arg_parser.add_argument("--output", "-o", type=str, help="Output path of csv file containing the predictions")
+        arg_parser.add_argument("--model", "-m", type=str, help="Path to the model that is to be restored", default="")
+        arg_parser.add_argument("--meta_graph", "-M", type=str,
+                                help="Path to the metagraph for restoration of the model",
+                                default="")
+        arg_parser.add_argument("--checkpoint", "-c", type=str, help="Restore from checkpoint if path is provided",
+                                default="")
+        arg_parser.add_argument("--train", "-t", action="store_true",
+                                help="set the program to train on a given dataset")
+        args = arg_parser.parse_args()
+        print(args)
+        run(args)
 
-
-
-def main():
-    arg_parser = argparse.ArgumentParser(
-        description="Predict images at the given path. Model based on a synthetic mnist dataset")
-    arg_parser.add_argument("--images", "-i", type=str,
-                            help="path to root of directory structure that is to be predicted")
-    arg_parser.add_argument("--output", "-o", type=str, help="Output path of csv file containing the predictions")
-    arg_parser.add_argument("--model", "-m", type=str, help="Path to the model that is to be restored", default="")
-    arg_parser.add_argument("--meta_graph", "-M", type=str, help="Path to the metagraph for restoration of the model",
-                            default="")
-    arg_parser.add_argument("--checkpoint", "-c", type=str, help="Restore from checkpoint if path is provided",
-                            default="")
-    arg_parser.add_argument("--train", "-t", action="store_true", help="set the program to train on a given dataset")
-    args = arg_parser.parse_args()
-    print(args)
-    run(args)
-
-
-if __name__ == '__main__':
-    main()
+    if __name__ == '__main__':
+        main()
