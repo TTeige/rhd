@@ -116,6 +116,7 @@ def convert_img(img):
 
 def run(args):
     trainer = Trainer()
+    saver = tf.train.Saver()
 
     if args.train:
 
@@ -130,7 +131,6 @@ def run(args):
 
     else:
         with tf.Session() as sess:
-            saver = tf.train.Saver()
             saver.restore(sess, tf.train.latest_checkpoint('model/'))
             img = convert_img(cv2.imread("/mnt/remote/extracted_fields/fs10061402175155/10_27fs10061402175155.jpg", 0))
 
