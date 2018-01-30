@@ -180,7 +180,7 @@ def run(args):
             pred = tf.nn.softmax(y_conv, 1)
             print(sess.run(pred, feed_dict))
             print("Using argmax")
-            pred2 = tf.arg_max(y_conv, 1)
+            pred2 = tf.argmax(y_conv, 1)
             print(sess.run(pred2, feed_dict))
 
 
