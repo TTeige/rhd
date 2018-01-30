@@ -110,6 +110,7 @@ def bias_variable(shape):
 
 def run(args):
     FLAGS = None
+    print("program init")
     # Import data
     mnist = input_data.read_data_sets('../MNIST_data/', one_hot=True)
 
@@ -139,6 +140,7 @@ def run(args):
     print('Saving graph to: %s' % graph_location)
     train_writer = tf.summary.FileWriter(graph_location)
     train_writer.add_graph(tf.get_default_graph())
+    print("model created")
     if args.train:
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
@@ -164,6 +166,7 @@ def run(args):
             saver.save(sess, 'model/mnist_model_2')
 
     else:
+        print("Starting session")
         with tf.Session() as sess:
             print("Starting prediction")
             saver = tf.train.Saver()
