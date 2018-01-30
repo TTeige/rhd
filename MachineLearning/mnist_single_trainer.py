@@ -172,9 +172,9 @@ def run(args):
             print("Starting prediction")
             saver = tf.train.Saver()
             saver.restore(sess, 'model/mnist_model_2')
+            print("Model restored")
             img = convert_img(
                 cv2.imread(args.images, 0))
-
             feed_dict = {x: img, y_: np.zeros([1, 10]), keep_prob: 1.0}
             print("Using softmax")
             pred = tf.nn.softmax(y_conv, 1)
