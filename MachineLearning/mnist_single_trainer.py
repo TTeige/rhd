@@ -63,7 +63,7 @@ class Trainer:
 
         return y_conv, keep_prob
 
-    def run_training(self):
+    def run_training(self, sess):
         mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
         y_conv, keep_prob = self.convDeepnn(self.x)
 
@@ -73,6 +73,9 @@ class Trainer:
 
         correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(self.y_, 1), name='cor_pred')
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+        saver = tf.train.Saver()
+        if tf.train.latest_checkpoint("model/"):
+            saver.restore(sess, tf.train.latest_checkpoint('model/'))
 
         for i in range(200000):
             batch = mnist.train.next_batch(50)
@@ -86,6 +89,8 @@ class Trainer:
 
         print('test accuracy %g' % accuracy.eval(feed_dict={
             self.x: mnist.test.images, self.y_: mnist.test.labels, keep_prob: 1.0}))
+
+        saver.save(sess, 'model/mnist_model_2')
 
     def initialize_tensors(self, y_conv):
         self.predictor = tf.nn.softmax(y_conv, 1, name='predictor')
@@ -116,18 +121,12 @@ def convert_img(img):
 
 def run(args):
     trainer = Trainer()
-    # saver = tf.train.Saver()
 
     if args.train:
 
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
-            saver = tf.train.Saver()
-            if tf.train.latest_checkpoint("model/"):
-                saver.restore(sess, tf.train.latest_checkpoint('model/'))
-
-            trainer.run_training()
-            saver.save(sess, 'model/mnist_model_2')
+            trainer.run_training(sess)
 
     else:
         with tf.Session() as sess:
