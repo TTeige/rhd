@@ -165,6 +165,7 @@ def run(args):
 
     else:
         with tf.Session() as sess:
+            print("Starting prediction")
             saver = tf.train.Saver()
             saver.restore(sess, tf.train.latest_checkpoint('model/'))
             img = convert_img(
@@ -173,8 +174,13 @@ def run(args):
             x = tf.placeholder(tf.float32, [None, 784])
             y_ = tf.placeholder(tf.float32, [None, 10])
             y_conv, keep_prob = deepnn(x)
+            feed_dict = {x: img, y_: np.zeros([1, 10]), keep_prob: 1.0}
+            print("Using softmax")
             pred = tf.nn.softmax(y_conv, 1)
-            print(sess.run(pred, feed_dict={x: img, y_: np.zeros([1, 10]), keep_prob: 1.0}))
+            print(sess.run(pred, feed_dict))
+            print("Using argmax")
+            pred2 = tf.arg_max(y_conv, 1)
+            print(sess.run(pred2, feed_dict))
 
     def main():
         arg_parser = argparse.ArgumentParser(
