@@ -21,7 +21,7 @@ import numpy as np
 def convert_img(img):
     img = img.flatten()
     img = [i / 255 for i in img]
-    img = np.expand_dims(img, axis=3)
+    img = [img]
     return img
 
 
