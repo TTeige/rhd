@@ -7,7 +7,6 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
-import sys
 import tempfile
 
 import os
@@ -16,7 +15,12 @@ import cv2
 from tensorflow.examples.tutorials.mnist import input_data
 
 import tensorflow as tf
+import numpy as np
 
+def convert_img(img):
+    img = img.flatten()
+    img = [i / 255 for i in img]
+    return img
 
 def deepnn(x):
     """deepnn builds the graph for a deep net for classifying digits.
@@ -162,10 +166,17 @@ def run(args):
         with tf.Session() as sess:
             saver = tf.train.Saver()
             saver.restore(sess, tf.train.latest_checkpoint('model/'))
-            img = cv2.imread("/mnt/remote/extracted_fields/fs10061402175155/10_27fs10061402175155.jpg", 0)
+            img = convert_img(cv2.imread("/mnt/remote/Yrke/enkelt_siffer/2_27fs10061408000849/1_2_27fs10061408000849.jpg", 0))
 
             x = tf.placeholder(tf.float32, [None, 784])
+            y_ = tf.placeholder(tf.float32, [None, 10])
+            pred = np.zeros([1,10])
             y_conv, keep_prob = deepnn(x)
+            accuracy = tf.get_variable("accuracy")
+            feed_dict = {x: img, y_: pred, keep_prob: 1.0}
+            print(accuracy.eval(feed_dict))
+
+
 
 
 def main():
