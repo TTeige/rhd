@@ -173,7 +173,7 @@ def run(args):
             saver = tf.train.Saver()
             saver.restore(sess, 'model/mnist_model_2')
             img = convert_img(
-                cv2.imread("/mnt/remote/Yrke/enkelt_siffer/2_27fs10061408000849/1_2_27fs10061408000849.jpg", 0))
+                cv2.imread(args.images, 0))
 
             feed_dict = {x: img, y_: np.zeros([1, 10]), keep_prob: 1.0}
             print("Using softmax")
