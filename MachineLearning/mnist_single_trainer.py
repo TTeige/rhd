@@ -171,7 +171,7 @@ def run(args):
         with tf.Session() as sess:
             print("Starting prediction")
             saver = tf.train.Saver()
-            saver.restore(sess, tf.train.latest_checkpoint('model/mnist_model_2'))
+            saver.restore(sess, 'model/')
             img = convert_img(
                 cv2.imread("/mnt/remote/Yrke/enkelt_siffer/2_27fs10061408000849/1_2_27fs10061408000849.jpg", 0))
 
