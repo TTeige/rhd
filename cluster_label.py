@@ -99,12 +99,25 @@ class DirectoriesClusteredView(Gtk.Window):
 
 class LabelFileClusterView(Gtk.Window):
     def __init__(self, progress_file, label_file):
+
+        self.label_file = label_file
+
         Gtk.Window.__init__(self, title='Labeling')
         main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         self.add(main_box)
         self.init_boxes(main_box)
-        unique_labels = self.init_labels(label_file)
+        unique_labels, self.img_paths = self.init_labels(label_file)
         self.init_selector(unique_labels, main_box)
+        self.current_label = ""
+
+        self.flowbox = Gtk.FlowBox()
+        self.flowbox.set_valign(Gtk.Align.START)
+        self.flowbox.set_max_children_per_line(30)
+        self.flowbox.set_selection_mode(Gtk.SelectionMode.NONE)
+        self.widgets = []
+        self.images = []
+        main_box.pack_start(self.flowbox, True, True, False)
+
 
     def init_selector(self, labels, main_box):
         label_store = Gtk.ListStore(str)
@@ -123,15 +136,35 @@ class LabelFileClusterView(Gtk.Window):
         if tree_iter is not None:
             model = combo.get_model()
             label = model[tree_iter][0]
-            print(label)
+            self.current_label = label
+            self.widgets, self.images = self.load_images(self.img_paths[self.current_label], self.flowbox, self.widgets)
+
+    @staticmethod
+    def load_images(files, flowbox, widgets):
+        for widget in widgets:
+            flowbox.remove(widget)
+        images = []
+        new_widgets = []
+        for f in files:
+            img_box = SingleImage(f)
+            new_widgets.append(img_box.check_button)
+            flowbox.add(img_box.check_button)
+            images.append(img_box)
+
+        return new_widgets, images
 
     @staticmethod
     def init_labels(label_file):
         reader = csv.DictReader(label_file)
         label_set = set()
+        paths = {}
         for entry in reader:
             label_set.add(entry['kode'])
-        return label_set
+            if entry['kode'] in paths:
+                paths[entry['kode']].append(entry['filename'])
+            else:
+                paths[entry['kode']] = []
+        return label_set, paths
 
     def next_batch(self, btn, direction):
         pass
