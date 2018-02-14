@@ -21,7 +21,7 @@ class MainWindow(Gtk.Window):
         self.current_file = ""
 
         self.csv_file = csv_file
-        fieldnames = ['filename', 'label']
+        fieldnames = ['filename', 'label', 'resolved']
 
         self.resume(fieldnames, csv_file)
 
@@ -33,14 +33,14 @@ class MainWindow(Gtk.Window):
             self.writer.writeheader()
 
         Gtk.Window.__init__(self, title='Labeling')
-        self.set_size_request(400, 200)
+        self.set_size_request(1028, 800)
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         self.add(vbox)
 
-        filename_box = Gtk.Box(spacing=6)
-        self.filename_label = Gtk.Label(str.format("{}", self.current_file))
-        filename_box.pack_start(self.filename_label, True, True, 0)
-        vbox.pack_start(filename_box, True, True, 0)
+        # filename_box = Gtk.Box(spacing=6)
+        # self.filename_label = Gtk.Label(str.format("{}", self.current_file))
+        # filename_box.pack_start(self.filename_label, True, True, 0)
+        # vbox.pack_start(filename_box, True, True, 0)
 
         next_prev_box = Gtk.Box(spacing=6)
         prev_image = Gtk.Button.new_with_label("Prev")
@@ -49,26 +49,28 @@ class MainWindow(Gtk.Window):
         next_image = Gtk.Button.new_with_label("Next")
         next_image.connect("clicked", self.next_image)
         next_prev_box.pack_start(next_image, True, True, 0)
-        self.img_count = Gtk.Label(str.format("{}/{}", self.labeled_image_count, self.num_images))
-        next_prev_box.pack_start(self.img_count, True, True, 0)
+        # self.img_count = Gtk.Label(str.format("{}/{}", self.labeled_image_count, self.num_images))
+        # next_prev_box.pack_start(self.img_count, True, True, 0)
         vbox.pack_start(next_prev_box, True, True, 0)
 
         hbox = Gtk.Box(spacing=6)
         vbox.pack_start(hbox, True, True, 0)
 
-        self.entry = Gtk.Entry()
-        self.entry.set_text("Enter label")
-        self.entry.connect("activate", self.on_submit_clicked)
-        hbox.pack_start(self.entry, True, True, 0)
-        submit = Gtk.Button.new_with_label("Submit")
-        submit.connect("clicked", self.on_submit_clicked)
-        hbox.pack_start(submit, True, True, 0)
+        # self.entry = Gtk.Entry()
+        # self.entry.set_text("Enter label")
+        # self.entry.connect("activate", self.on_submit_clicked)
+        # hbox.pack_start(self.entry, True, True, 0)
+        # submit = Gtk.Button.new_with_label("Submit")
+        # submit.connect("clicked", self.on_submit_clicked)
+        # hbox.pack_start(submit, True, True, 0)
 
-        self.display_image = GdkPixbuf.Pixbuf.new_from_file(self.image_paths[self.image_index])
-
-        self.img = Gtk.Image()
-        self.img.set_from_pixbuf(self.display_image)
-        vbox.pack_start(self.img, True, True, 0)
+        self.images = []
+        for i in range(self.image_index, self.image_index + 3):
+            img = Gtk.Image()
+            img.set_from_pixbuf(GdkPixbuf.Pixbuf.new_from_file(self.image_paths[i]))
+            self.images.append(img)
+            self.image_index += 1
+            vbox.pack_start(self.images[i], True, True, 0)
 
     def do_submit(self):
         label = self.entry.get_text()
@@ -85,10 +87,12 @@ class MainWindow(Gtk.Window):
         self.do_submit()
 
     def go_to_next(self):
-        self.image_index += 1
-        self.display_image = GdkPixbuf.Pixbuf.new_from_file(self.image_paths[self.image_index])
-        self.filename_label.set_text(str.format("{}", self.image_paths[self.image_index]))
-        self.img.set_from_pixbuf(self.display_image)
+        self.images = []
+        for i in range(self.image_index, self.image_index + 3):
+            img = Gtk.Image()
+            img.set_from_pixbuf(GdkPixbuf.Pixbuf.new_from_file(self.image_paths[i]))
+            self.image_index += 1
+            self.images[i] = img
 
     def next_image(self, button):
         self.go_to_next()
