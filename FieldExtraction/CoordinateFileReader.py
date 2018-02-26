@@ -61,6 +61,7 @@ class CoordinateFileReader:
             if self.mod != "":
                 img_filename = img_filename.split('=')[1]
                 img_filename = self.mod + img_filename + ".jpg"
+                img_filename = img_filename.replace("/", os.path.sep)
         except Exception as e:
             print(e)
 
