@@ -1,23 +1,25 @@
-import gi
+# import gi
 import os
 import csv
+# gi.require_version('Gtk', '3.0')
+# from gi.repository import Gtk, Gdk
+# from gi.repository import GdkPixbuf
 
-gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gdk
-from gi.repository import GdkPixbuf
+import tkinter as tk
+from tkinter import filedialog, StringVar
+from PIL import Image, ImageTk
 
-
-class SingleView(Gtk.Window):
-    def __init__(self):
+class SingleView(tk.Frame):
+    def __init__(self, master=None):
         if not os.path.exists("labels.csv"):
             with open("labels.csv", "w") as l:
                 writer = csv.DictWriter(l, ["filename", "label"])
                 writer.writeheader()
-        Gtk.Window.__init__(self, title="Simple Image Labeling")
-        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
-        self.add(main_box)
+        super().__init__(master)
+        self.pack()
         self.img_dir = ""
         self.root_dir = ""
+        self.entry_text = StringVar()
 
         self.current_files = []
         self.available_dirs = []
@@ -26,34 +28,31 @@ class SingleView(Gtk.Window):
 
         self.progress = self.restore_from_file()
 
-        self.welcome_label = Gtk.Label(
-            "Click Choose Directory and select the directory containing the images to be labeled")
-        main_box.add(self.welcome_label)
+        self.welcome_label = tk.Label(self,
+            text="Click Choose Directory and select the directory containing the images to be labeled")
 
-        self.img = Gtk.Image()
-        main_box.add(self.img)
+        self.img = tk.Label(self, image=None)
 
-        self.entry = Gtk.Entry()
-        self.entry.connect("activate", self.on_submit)
-        main_box.add(self.entry)
+        self.entry = tk.Entry(self, textvariable=self.entry_text)
+        self.entry.bind("<Return>", self.on_submit_entry)
+        
+        self.select_folder_btn = tk.Button(self, command=self.on_folder_clicked, text="Select Folder")
 
-        button_container = Gtk.Box(spacing=6)
+        prev_btn = tk.Button(self, command=self.prev_img, text="Previous Image")
+        
+        submit = tk.Button(self,command=self.on_submit, text="Submit")
+        submit.bind("<Return>", self.on_submit)
 
-        select_folder_btn = Gtk.Button("Choose Directory")
-        select_folder_btn.connect("clicked", self.on_folder_clicked)
-        button_container.pack_start(select_folder_btn, True, True, 0)
+        
+        self.grid(column=0, row=0, columnspan=3, rowspan = 6)
+        self.welcome_label.grid(column=0, row=0, columnspan=3, rowspan=1)
+        self.img.grid(column=0, row=1, columnspan=3, rowspan=2)
+        self.entry.grid(column=0, row=4, columnspan=3, rowspan=1)
+        self.select_folder_btn.grid(column=0, row=5, columnspan=1, rowspan=1)
+        prev_btn.grid(column=1, row=5, columnspan=1, rowspan=1)
+        submit.grid(column=2, row=5, columnspan=1, rowspan=1)
 
-        prev_btn = Gtk.Button("Previous Image")
-        prev_btn.connect("clicked", self.prev_img)
-        button_container.pack_start(prev_btn, True, True, 0)
-
-        submit = Gtk.Button.new_with_label("Submit")
-        submit.connect("clicked", self.on_submit)
-        button_container.pack_start(submit, True, True, 0)
-
-        main_box.add(button_container)
-
-    def prev_img(self, btn):
+    def prev_img(self):
         self.img_index -= 2
         if self.img_index < 0:
             self.img_index = 0
@@ -102,18 +101,15 @@ class SingleView(Gtk.Window):
                 done_dict[folder] = True
         return done_dict
 
-    def on_submit(self, btn):
+    def on_submit_entry(self, a):
+        self.on_submit()
+    def on_submit(self):
         with open("labels.csv", "a+") as labels:
             writer = csv.DictWriter(labels, ["filename", "label"])
 
-            text = self.entry.get_text()
-
-            if text == "":
-                text = "None"
             try:
-                writer.writerow({"filename": self.current_files[self.img_index], "label": text})
-
-                self.entry.set_text("")
+                writer.writerow({"filename": self.current_files[self.img_index], "label": self.entry_text.get()})
+                self.entry_text.set("")
                 self.update_img()
             except IndexError as e:
                 self.move_to_next_folder()
@@ -122,8 +118,13 @@ class SingleView(Gtk.Window):
         self.img_index += 1
         path = self.current_files[self.img_index]
         if path not in self.progress:
-            self.img.set_from_pixbuf(GdkPixbuf.Pixbuf.new_from_file(path))
-            self.welcome_label.set_label(path)
+            try:
+                tmp_img = ImageTk.PhotoImage(Image.open(path))
+                self.img.configure(image=tmp_img)
+                self.img.image = tmp_img
+                self.welcome_label["text"] = path
+            except Exception as e:
+                print(e)
         else:
             self.update_img()
 
@@ -135,23 +136,23 @@ class SingleView(Gtk.Window):
         self.available_dirs = [os.path.join(folder, f) for f in os.listdir(folder) if
                                os.path.isdir(os.path.join(folder, f))]
 
-    def on_folder_clicked(self, btn):
-        dialog = Gtk.FileChooserDialog("Select folder containing images", self, Gtk.FileChooserAction.SELECT_FOLDER
-                                       , (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-                                          "Select", Gtk.ResponseType.OK))
-        dialog.set_default_size(800, 400)
-
-        response = dialog.run()
-        if response == Gtk.ResponseType.OK:
-            self.img_dir = dialog.get_filename()
-            try:
-                self.get_dirs(self.img_dir)
-                self.select_files(self.img_dir)
-                self.update_img()
-            except IndexError as e:
-                self.move_to_next_folder()
-
-        dialog.destroy()
+    def on_folder_clicked(self):
+        self.img_dir = filedialog.askdirectory()
+        if self.img_dir == "":
+            return
+        # Have to replace all of the "/" because tkinter only returns a path containing them
+        components = self.img_dir.split("/")
+        if os.path.sep == "\\":
+            components[0] += "\\"
+        self.img_dir = ""
+        for i in components:
+            self.img_dir = os.path.join(self.img_dir, i)
+        try:
+            self.get_dirs(self.img_dir)
+            self.select_files(self.img_dir)
+            self.update_img()
+        except IndexError as e:
+            self.move_to_next_folder()
 
     def move_to_next_folder(self):
         self.folder_index += 1
@@ -164,12 +165,10 @@ class SingleView(Gtk.Window):
             else:
                 self.move_to_next_folder()
         except IndexError:
-            self.welcome_label.set_label(
-                "Click submit again, if there are no new images, you are done with the selected directory!")
+            self.welcome_label["text"] = "Click submit again, if there are no new images, you are done with the selected directory!"
 
 
 if __name__ == '__main__':
-    window = SingleView()
-    window.connect('delete-event', Gtk.main_quit)
-    window.show_all()
-    Gtk.main()
+    root = tk.Tk()
+    window = SingleView(master=root)
+    window.mainloop()
