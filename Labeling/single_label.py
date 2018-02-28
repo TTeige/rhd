@@ -62,7 +62,6 @@ class SingleView(tk.Frame):
                 return
             self.move_to_next_folder()
         self.update_img()
-        self.img.show()
         with open("labels.csv", "a+") as csv_file:
             # Taken from https://stackoverflow.com/a/10289740
             # Move the pointer (similar to a cursor in a text editor) to the end of the file.
