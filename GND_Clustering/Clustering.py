@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.mixture import GaussianMixture
 import math
 from scipy.ndimage import affine_transform
-from scipy.signal import argrelmin
+from scipy.signal import argrelmin, argrelmax
 import os
 import concurrent.futures as cf
 import time
@@ -24,7 +24,7 @@ class GaussianNormalDistributionCluster:
         """
         self.image = None
         self.components = num_components
-        self.shape = (28, 28)
+        self.shape = (100, 100)
 
     @staticmethod
     def gaussian(x, mu, sig, weight):
@@ -60,8 +60,9 @@ class GaussianNormalDistributionCluster:
         rows, cols = self.image.shape
 
         np.random.seed(0)
-        affine = np.array([[1, 0, 0], [-0.2, 1, 0], [0, 0, 1]])
+        affine = np.array([[1, 0, 0], [-0.3, 1, 0], [0, 0, 1]])
         img = affine_transform(self.image, affine, cval=255)
+        self.image = img
         img_flat = img.flatten()
         img_flat = [v / 255 for v in img_flat]
 
@@ -84,6 +85,14 @@ class GaussianNormalDistributionCluster:
                 return None
         minims = argrelmin(summed_gaussian)
         return minims
+
+    def get_maxims(self, summed_gaussian=None):
+        if summed_gaussian is None:
+            summed_gaussian = self.get_summed_gaussian()
+            if summed_gaussian is None:
+                return None
+        maxims = argrelmax(summed_gaussian)
+        return maxims
 
     @staticmethod
     def render_hist(x_density, num_bins=28):
@@ -136,23 +145,110 @@ class GaussianNormalDistributionCluster:
     def resize_images(self, images):
         completed = []
         for image in images:
-            x_off = y_off = 1
-            img = cv2.resize(image, (self.shape[0] - y_off, self.shape[1] - x_off), interpolation=cv2.INTER_AREA)
-            reshaped = np.full(self.shape, 255, dtype='uint8')
-            p = np.array(img)
-            reshaped[x_off:p.shape[0] + x_off, y_off:p.shape[1] + y_off] = p
+            if image.shape[0] > self.shape[0]:
+                # Resize the image if an axis is too large to fit in the new image
+                if image.shape[1] > self.shape[1]:
+                    # Both axis in the image is greater than the wanted shape, resize both axis
+                    image = cv2.resize(image, self.shape, interpolation=cv2.INTER_CUBIC)
+                else:
+                    # Only the X axis is greater, resize only this
+                    image = cv2.resize(image, (image.shape[1], self.shape[0]), interpolation=cv2.INTER_CUBIC)
+            else:
+                if image.shape[1] > self.shape[1]:
+                    # Only the Y axis is greater, resize only this
+                    image = cv2.resize(image, (self.shape[1], image.shape[0]), interpolation=cv2.INTER_CUBIC)
+
+            reshaped = np.full(self.shape, 0, dtype='uint8')
+            p = np.array(image)
+            x_offset = int(abs(image.shape[0] - self.shape[0]) / 2)
+            y_offset = int(abs(image.shape[1] - self.shape[1]) / 2)
+            reshaped[x_offset:p.shape[0] + x_offset, y_offset:p.shape[1] + y_offset] = p
+            npix = 0
+            kernel = np.ones((5,5))
+            for row in reshaped:
+                for val in row:
+                    if val > 250:
+                        npix += 1
+            if npix > 1500:
+                if npix > 1900:
+                    reshaped = cv2.erode(reshaped, kernel)
+                    reshaped = cv2.erode(reshaped, kernel)
+                else:
+                    reshaped = cv2.erode(reshaped, kernel)
+            elif npix < 600:
+                if npix < 300:
+                    reshaped = cv2.dilate(reshaped, kernel)
+                    reshaped = cv2.dilate(reshaped, kernel)
+                else:
+                    reshaped = cv2.dilate(reshaped, kernel)
+
             completed.append(reshaped)
+
         return completed
 
-    def split_image(self, image, split_points):
-
+    def split_image(self, image, split_points, mid_points):
+        image = cv2.bitwise_not(image)
+        cv2.imshow("", image)
+        cv2.waitKey()
         new1 = [row[:split_points[0]] for row in image]
         new2 = [row[split_points[0]:split_points[1]] for row in image]
         new3 = [row[split_points[1]:] for row in image]
         new1 = np.array(new1)
         new2 = np.array(new2)
         new3 = np.array(new3)
-        return self.resize_images([new1, new2, new3])
+
+        def test_for_value(col):
+            for val in col:
+                if val > 200:
+                    # We found a value in this column, so go to next
+                    return True
+            return False
+
+        # Left image
+        # Extract array from mid point of the digit and switch to column major order
+        from_mid = np.swapaxes(new1[:, mid_points[0]:0:-1], 1, 0)
+        for i in range(0, from_mid.shape[0] - 1):
+            # Iterate from the bottom of the new image
+            # Check if the row contains values
+            if not test_for_value(from_mid[i]):
+                # Check the next row for values
+                if not test_for_value(from_mid[i + 1]):
+                    # We found a row without values, and the next does not either
+                    # Copy over the values based on the new first column containing values
+                    new1 = new1[:, mid_points[0] - i:]
+                    break
+
+        # Center image
+        digit_center = mid_points[1] - split_points[0]
+        from_mid = np.swapaxes(new2[:, digit_center:], 1, 0)
+        for i in range(0, from_mid.shape[0] - 1):
+            # Iterate from the top of the new image
+            # Check if the row contains values
+            if not test_for_value(from_mid[i]):
+                # Check the next row for values
+                if not test_for_value(from_mid[i - 1]):
+                    # We found a row without values, and the next does not either
+                    # Copy over the values based on the new first column containing values
+                    new2 = new2[:, :i + digit_center]
+                    break
+
+        # Right image
+        # Calculate offset from the total image length
+        digit_center = mid_points[2] - split_points[1]
+        from_mid = np.swapaxes(new3[:, digit_center:], 1, 0)
+        for i in range(0, from_mid.shape[0] - 1):
+            # Iterate from the top of the new image
+            # Check if the row contains values
+            if not test_for_value(from_mid[i]):
+                # Check the next row for values
+                if not test_for_value(from_mid[i - 1]):
+                    # We found a row without values, and the next does not either
+                    # Copy over the values based on the new first column containing values
+                    new3 = new3[:, :i + digit_center]
+                    break
+
+        all = [new1, new2, new3]
+        return self.resize_images(all)
 
 
 def run_test(path):
@@ -164,15 +260,13 @@ def run_test(path):
     sum_g = gnc.get_summed_gaussian(x_density)
     gnc.render_dist(sum_g)
     mins = gnc.get_minimas(sum_g)
+    maxes = gnc.get_maxims(sum_g)
     plt.show()
-    cv2.line(img, (mins[0][0], img.shape[1]), (mins[0][0], 0), (0, 0, 0))
-    cv2.line(img, (mins[0][1], img.shape[1]), (mins[0][1], 0), (0, 0, 0))
-    cv2.imwrite("example.jpg", img)
-    new_images = gnc.split_image(img, np.array([mins[0][0], mins[0][1]]))
+    new_images = gnc.split_image(img, np.array([mins[0][0], mins[0][1]]),
+                                 np.array([maxes[0][0], maxes[0][1], maxes[0][2]]))
     cv2.imshow("0", new_images[0])
     cv2.imshow("1", new_images[1])
     cv2.imshow("2", new_images[2])
-    cv2.imshow("original", img)
     cv2.waitKey()
 
 
@@ -185,8 +279,8 @@ def execute(root, file, output):
     """
     gnc = GaussianNormalDistributionCluster()
     path = os.path.join(root, file)
-    image = gnc.load_image(path)
     try:
+        image = gnc.load_image(path)
         mins = gnc.get_minimas()
         if mins is None:
             return None, None, None
