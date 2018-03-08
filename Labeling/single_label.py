@@ -9,6 +9,7 @@ import tkinter as tk
 from tkinter import filedialog, StringVar
 from PIL import Image, ImageTk
 
+
 class SingleView(tk.Frame):
     def __init__(self, master=None):
         if not os.path.exists("labels.csv"):
@@ -29,22 +30,21 @@ class SingleView(tk.Frame):
         self.progress = self.restore_from_file()
 
         self.welcome_label = tk.Label(self,
-            text="Click Choose Directory and select the directory containing the images to be labeled")
+                                      text="Click Choose Directory and select the directory containing the images to be labeled")
 
         self.img = tk.Label(self, image=None)
 
         self.entry = tk.Entry(self, textvariable=self.entry_text)
         self.entry.bind("<Return>", self.on_submit_entry)
-        
+
         self.select_folder_btn = tk.Button(self, command=self.on_folder_clicked, text="Select Folder")
 
         prev_btn = tk.Button(self, command=self.prev_img, text="Previous Image")
-        
-        submit = tk.Button(self,command=self.on_submit, text="Submit")
+
+        submit = tk.Button(self, command=self.on_submit, text="Submit")
         submit.bind("<Return>", self.on_submit)
 
-        
-        self.grid(column=0, row=0, columnspan=3, rowspan = 6)
+        self.grid(column=0, row=0, columnspan=3, rowspan=6)
         self.welcome_label.grid(column=0, row=0, columnspan=3, rowspan=1)
         self.img.grid(column=0, row=1, columnspan=3, rowspan=2)
         self.entry.grid(column=0, row=4, columnspan=3, rowspan=1)
@@ -102,6 +102,7 @@ class SingleView(tk.Frame):
 
     def on_submit_entry(self, a):
         self.on_submit()
+
     def on_submit(self):
         with open("labels.csv", "a+") as labels:
             writer = csv.DictWriter(labels, ["filename", "label"])
@@ -164,7 +165,8 @@ class SingleView(tk.Frame):
             else:
                 self.move_to_next_folder()
         except IndexError:
-            self.welcome_label["text"] = "Click submit again, if there are no new images, you are done with the selected directory!"
+            self.welcome_label[
+                "text"] = "Click submit again, if there are no new images, you are done with the selected directory!"
 
 
 if __name__ == '__main__':
