@@ -13,7 +13,8 @@ import argparse
 
 class GaussianNormalDistributionCluster:
     """
-    GaussianNormalDistributionCluster provides methods for extracting the density distribution of an image, it's summed gaussian normal distributions and it's minimas for digit seperation.
+    GaussianNormalDistributionCluster provides methods for extracting the density distribution of an image,
+    it's summed gaussian normal distributions and it's minimas for digit seperation.
     In order to render the plots, matplotlib.pyplot.show() must be called after the rendering methods are called.
     The load_image(path) method must be called before using any other method.
     """
@@ -52,7 +53,8 @@ class GaussianNormalDistributionCluster:
 
     def get_x_density(self):
         """
-        Creates a 1d array containing the location of pixel values on the x-axis above a threshold, load_image must be called first
+        Creates a 1d array containing the location of pixel values on the x-axis above a threshold,
+        load_image must be called first
         :return: list of pixel locations
         """
         if self.image is None:
@@ -76,7 +78,8 @@ class GaussianNormalDistributionCluster:
     def get_minimas(self, summed_gaussian=None):
         """
         Returns local minimas of the gaussian function
-        :param summed_gaussian: sum of gaussian normal distributions. If None, the method will retrieve a summed gaussian for the given number of components
+        :param summed_gaussian: sum of gaussian normal distributions. If None, the method will retrieve a summed
+        gaussian for the given number of components
         :return: local minimas. None if the image contains no valid pixels, see method get_x_density().
         """
         if summed_gaussian is None:
@@ -164,7 +167,7 @@ class GaussianNormalDistributionCluster:
             y_offset = int(abs(image.shape[1] - self.shape[1]) / 2)
             reshaped[x_offset:p.shape[0] + x_offset, y_offset:p.shape[1] + y_offset] = p
             npix = 0
-            kernel = np.ones((5,5))
+            kernel = np.ones((5, 5))
             for row in reshaped:
                 for val in row:
                     if val > 250:
@@ -245,8 +248,8 @@ class GaussianNormalDistributionCluster:
                     new3 = new3[:, :i + digit_center]
                     break
 
-        all = [new1, new2, new3]
-        return self.resize_images(all)
+        _all = [new1, new2, new3]
+        return self.resize_images(_all)
 
 
 def run_test(path):
@@ -273,6 +276,7 @@ def run_test(path):
 def execute(root, file, output):
     """
     Function to handle the launching of a parallel task
+    :param output: path to output location
     :param root: root directory
     :param file: name of the file
     :return: list of images separated, name of the new folder, name of the new file
@@ -284,6 +288,7 @@ def execute(root, file, output):
         mins = gnc.get_minimas()
         if mins is None:
             return None, None, None
+        maxes = gnc.get_maxims()
     except ValueError:
         # Unsure of what exactly happens here, but the x_density vector is only a single dimension
         # which causes the GMM to fail. This can happen if there is only a single row containing pixels, or none
@@ -293,7 +298,8 @@ def execute(root, file, output):
         return None, None, None
 
     try:
-        new_images = gnc.split_image(image, np.array([mins[0][0], mins[0][1]]))
+        new_images = gnc.split_image(image, np.array([mins[0][0], mins[0][1]]),
+                                     np.array([maxes[0][0], maxes[0][1], maxes[0][2]]))
         new_folder = os.path.join(output, file.split(".jpg")[0])
         return new_images, new_folder, file
     except IndexError as e:
@@ -319,7 +325,7 @@ def handle_done(done):
         cv2.imwrite(new_image_filename, im)
 
 
-def run_parallel(path):
+def run_parallel(path, out):
     np.random.seed(0)
     start_time = time.time()
     futures = []
@@ -335,7 +341,7 @@ def run_parallel(path):
                 image_strings.append((root, file))
 
         for name in image_strings:
-            futures.append(executor.submit(execute, name[0], name[1], args.output))
+            futures.append(executor.submit(execute, name[0], name[1], out))
 
         for done in cf.as_completed(futures):
             handle_done(done)
@@ -346,18 +352,18 @@ def run_parallel(path):
         print("--- " + str(time.time() - start_time) + " ---")
 
 
-def handle_main(args):
-    if args.test:
-        run_test(args.path)
-    else:
-        run_parallel(args.path)
-
-
-if __name__ == '__main__':
+def handle_main():
     arg = argparse.ArgumentParser("Extract individual digits from image")
     arg.add_argument("-t", "--test", action="store_true", default=False, help="Run the program in test_mode")
     arg.add_argument("-p", "--path", type=str,
                      help="path to root directory if not running test. If test, full path to image")
     arg.add_argument("-o", "--output", type=str, help="output path")
     args = arg.parse_args()
-    handle_main(args)
+    if args.test:
+        run_test(args.path)
+    else:
+        run_parallel(args.path, args.output)
+
+
+if __name__ == '__main__':
+    handle_main()
