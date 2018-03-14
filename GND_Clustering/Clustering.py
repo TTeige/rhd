@@ -188,8 +188,6 @@ class GaussianNormalDistributionCluster:
 
     def split_image(self, image, split_points, mid_points):
         image = cv2.bitwise_not(image)
-        cv2.imshow("", image)
-        cv2.waitKey()
         new1 = [row[:split_points[0]] for row in image]
         new2 = [row[split_points[0]:split_points[1]] for row in image]
         new3 = [row[split_points[1]:] for row in image]
@@ -261,6 +259,8 @@ def run_test(path):
     gnc.render_dist(sum_g)
     mins = gnc.get_minimas(sum_g)
     maxes = gnc.get_maxims(sum_g)
+    # cv2.line(img, (mins[0][0], img.shape[1]), (mins[0][0], 0), (0, 0, 0))
+    # cv2.line(img, (mins[0][1], img.shape[1]), (mins[0][1], 0), (0, 0, 0))
     plt.show()
     new_images = gnc.split_image(img, np.array([mins[0][0], mins[0][1]]),
                                  np.array([maxes[0][0], maxes[0][1], maxes[0][2]]))
