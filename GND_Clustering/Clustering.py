@@ -148,6 +148,12 @@ class GaussianNormalDistributionCluster:
     def resize_images(self, images):
         completed = []
         for image in images:
+            if image is None:
+                print("Wat")
+            if image.shape[0] == 0:
+                print("The image shape on the x axis is {}".format(image.shape[0]))
+            if image.shape[1] == 0:
+                print("The image shape on the y axis is {}".format(image.shape[1]))
             if image.shape[0] > self.shape[0]:
                 # Resize the image if an axis is too large to fit in the new image
                 if image.shape[1] > self.shape[1]:
@@ -205,51 +211,66 @@ class GaussianNormalDistributionCluster:
                     return True
             return False
 
-        # Left image
-        # Extract array from mid point of the digit and switch to column major order
-        from_mid = np.swapaxes(new1[:, mid_points[0]:0:-1], 1, 0)
-        for i in range(0, from_mid.shape[0] - 1):
-            # Iterate from the bottom of the new image
-            # Check if the row contains values
-            if not test_for_value(from_mid[i]):
-                # Check the next row for values
-                if not test_for_value(from_mid[i + 1]):
-                    # We found a row without values, and the next does not either
-                    # Copy over the values based on the new first column containing values
-                    new1 = new1[:, mid_points[0] - i:]
-                    break
+        try:
+            # Left image
+            # Extract array from mid point of the digit and switch to column major order
+            from_mid = np.swapaxes(new1[:, mid_points[0]:0:-1], 1, 0)
+            for i in range(0, from_mid.shape[0] - 1):
+                # Iterate from the bottom of the new image
+                # Check if the row contains values
+                if not test_for_value(from_mid[i]):
+                    # Check the next row for values
+                    if not test_for_value(from_mid[i + 1]):
+                        # We found a row without values, and the next does not either
+                        # Copy over the values based on the new first column containing values
+                        new1 = new1[:, mid_points[0] - i:]
+                        break
+            if new1.shape[0] == 0 or new1.shape[1] == 0:
+                raise ValueError
+        except ValueError as e:
+            print("Left image has wrong shape {}".format(new1.shape))
 
-        # Center image
-        digit_center = mid_points[1] - split_points[0]
-        from_mid = np.swapaxes(new2[:, digit_center:], 1, 0)
-        for i in range(0, from_mid.shape[0] - 1):
-            # Iterate from the top of the new image
-            # Check if the row contains values
-            if not test_for_value(from_mid[i]):
-                # Check the next row for values
-                if not test_for_value(from_mid[i - 1]):
-                    # We found a row without values, and the next does not either
-                    # Copy over the values based on the new first column containing values
-                    new2 = new2[:, :i + digit_center]
-                    break
+        try:
+            # Center image
+            digit_center = mid_points[1] - split_points[0]
+            from_mid = np.swapaxes(new2[:, digit_center:], 1, 0)
+            for i in range(0, from_mid.shape[0] - 1):
+                # Iterate from the top of the new image
+                # Check if the row contains values
+                if not test_for_value(from_mid[i]):
+                    # Check the next row for values
+                    if not test_for_value(from_mid[i - 1]):
+                        # We found a row without values, and the next does not either
+                        # Copy over the values based on the new first column containing values
+                        new2 = new2[:, :i + digit_center]
+                        break
+            if new2.shape[0] == 0 or new2.shape[1] == 0:
+                raise ValueError
+        except ValueError as e:
+            print("Middle image has wrong shape {}".format(new2.shape))
 
-        # Right image
-        # Calculate offset from the total image length
-        digit_center = mid_points[2] - split_points[1]
-        from_mid = np.swapaxes(new3[:, digit_center:], 1, 0)
-        for i in range(0, from_mid.shape[0] - 1):
-            # Iterate from the top of the new image
-            # Check if the row contains values
-            if not test_for_value(from_mid[i]):
-                # Check the next row for values
-                if not test_for_value(from_mid[i - 1]):
-                    # We found a row without values, and the next does not either
-                    # Copy over the values based on the new first column containing values
-                    new3 = new3[:, :i + digit_center]
-                    break
+        try:
+            # Right image
+            # Calculate offset from the total image length
+            digit_center = mid_points[2] - split_points[1]
+            from_mid = np.swapaxes(new3[:, digit_center:], 1, 0)
+            for i in range(0, from_mid.shape[0] - 1):
+                # Iterate from the top of the new image
+                # Check if the row contains values
+                if not test_for_value(from_mid[i]):
+                    # Check the next row for values
+                    if not test_for_value(from_mid[i - 1]):
+                        # We found a row without values, and the next does not either
+                        # Copy over the values based on the new first column containing values
+                        new3 = new3[:, :i + digit_center]
+                        break
+            if new3.shape[0] == 0 or new3.shape[1] == 0:
+                raise ValueError
+        except ValueError as e:
+            print("Right image has wrong shape {}".format(new3.shape))
+        all_i = np.array([new1, new2, new3])
 
-        _all = [new1, new2, new3]
-        return self.resize_images(_all)
+        return self.resize_images(all_i)
 
 
 def run_test(path):
