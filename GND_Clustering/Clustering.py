@@ -9,7 +9,7 @@ import os
 import concurrent.futures as cf
 import time
 import argparse
-
+from inspect import currentframe, getframeinfo
 
 class GaussianNormalDistributionCluster:
     """
@@ -289,12 +289,14 @@ def execute(root, file, output):
         if mins is None:
             return None, None, None
         maxes = gnc.get_maxims()
-    except ValueError:
+        if maxes is None:
+            return None, None, None
+    except ValueError as e:
         # Unsure of what exactly happens here, but the x_density vector is only a single dimension
         # which causes the GMM to fail. This can happen if there is only a single row containing pixels, or none
         # These images are however not relevant and can be skipped.
 
-        print(ValueError)
+        print("{} Skipping image at path: {} due to lacking values in x_density".format(e, path))
         return None, None, None
 
     try:
@@ -305,7 +307,7 @@ def execute(root, file, output):
     except IndexError as e:
         # Only one minima is found, this is the wrong result for the profession field. Should be two minimas
         # So these images are just skipped.
-        print(e)
+        print("{} Skipping image at path: {} due to single minima or maxima".format(e, path))
         return None, None, None
 
 
