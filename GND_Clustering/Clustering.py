@@ -166,24 +166,24 @@ class GaussianNormalDistributionCluster:
             x_offset = int(abs(image.shape[0] - self.shape[0]) / 2)
             y_offset = int(abs(image.shape[1] - self.shape[1]) / 2)
             reshaped[x_offset:p.shape[0] + x_offset, y_offset:p.shape[1] + y_offset] = p
-            npix = 0
-            kernel = np.ones((5, 5))
-            for row in reshaped:
-                for val in row:
-                    if val > 250:
-                        npix += 1
-            if npix > 1500:
-                if npix > 1900:
-                    reshaped = cv2.erode(reshaped, kernel)
-                    reshaped = cv2.erode(reshaped, kernel)
-                else:
-                    reshaped = cv2.erode(reshaped, kernel)
-            elif npix < 600:
-                if npix < 300:
-                    reshaped = cv2.dilate(reshaped, kernel)
-                    reshaped = cv2.dilate(reshaped, kernel)
-                else:
-                    reshaped = cv2.dilate(reshaped, kernel)
+            # npix = 0
+            # kernel = np.ones((5, 5))
+            # for row in reshaped:
+            #     for val in row:
+            #         if val > 250:
+            #             npix += 1
+            # if npix > 1500:
+            #     if npix > 1900:
+            #         reshaped = cv2.erode(reshaped, kernel)
+            #         reshaped = cv2.erode(reshaped, kernel)
+            #     else:
+            #         reshaped = cv2.erode(reshaped, kernel)
+            # elif npix < 600:
+            #     if npix < 300:
+            #         reshaped = cv2.dilate(reshaped, kernel)
+            #         reshaped = cv2.dilate(reshaped, kernel)
+            #     else:
+            #         reshaped = cv2.dilate(reshaped, kernel)
 
             completed.append(reshaped)
 
