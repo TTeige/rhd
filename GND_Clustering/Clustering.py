@@ -9,7 +9,8 @@ import os
 import concurrent.futures as cf
 import time
 import argparse
-from inspect import currentframe, getframeinfo
+from scipy.optimize import root
+
 
 class GaussianNormalDistributionCluster:
     """
@@ -26,6 +27,9 @@ class GaussianNormalDistributionCluster:
         self.image = None
         self.components = num_components
         self.shape = (100, 100)
+        self.gaussian_values = None
+        self.mu = None
+        self.sig = None
 
     @staticmethod
     def gaussian(x, mu, sig, weight):
@@ -105,7 +109,7 @@ class GaussianNormalDistributionCluster:
         :param num_bins: number of bins to separate the values in to
         :return:
         """
-        plt.hist(x_density, histtype='bar', normed=True, bins=num_bins)
+        plt.hist(x_density, histtype='bar', bins=num_bins)
 
     @staticmethod
     def render_dist(gaussian):
@@ -136,13 +140,15 @@ class GaussianNormalDistributionCluster:
 
         mu = gmm.means_.flatten()
         sig = gmm.covariances_.flatten()
+        self.mu = mu
+        self.sig = sig
         gausses = []
         for i in range(0, len(mu)):
             g = self.gaussian(np.arange(self.image.shape[1]), mu[i], sig[i], gmm.weights_[i])
             gausses.append(g)
         gausses = np.array(gausses)
+        self.gaussian_values = gausses
         sum_g = gausses.sum(axis=0)
-
         return sum_g
 
     def resize_images(self, images):
@@ -205,8 +211,8 @@ class GaussianNormalDistributionCluster:
         new3 = np.array(new3)
 
         def test_for_value(col):
-            for val in col:
-                if val > 200:
+            for col_val in col:
+                if col_val > 200:
                     # We found a value in this column, so go to next
                     return True
             return False
@@ -228,6 +234,46 @@ class GaussianNormalDistributionCluster:
             if new1.shape[0] == 0 or new1.shape[1] == 0:
                 raise ValueError
         except ValueError as e:
+            gaus_and_mid = []
+            for val in self.gaussian_values:
+                gaus_and_mid.append((self.get_maxims(val)[0][0], val))
+            gaus_and_mid = sorted(gaus_and_mid, key=lambda k: k[0])
+            for g in gaus_and_mid:
+                self.render_dist(g[1])
+                plt.scatter(g[0], g[1][g[0]])
+
+            intersections = []
+
+            try:
+                for i in range(0, len(gaus_and_mid) - 1):
+                    for k, val in enumerate(gaus_and_mid[i][1]):
+                        # if math.isclose(val, gaus_and_mid[i + 1][1][k], abs_tol=1e-4) and val > 5.0e-5 and k > \
+                        #         gaus_and_mid[i][0]:
+                        if k == len(gaus_and_mid[i][1]) - 3:
+                            break
+                        a = val
+                        b = gaus_and_mid[i+1][1][k]
+                        c = gaus_and_mid[i][1][k+3]
+                        d = gaus_and_mid[i+1][1][k+3]
+                        if a > c:
+                            tmp = c
+                            c = a
+                            a = tmp
+                        if b > d:
+                            tmp = d
+                            d = b
+                            b = tmp
+                        if (a <= d and c >= b) and k > gaus_and_mid[i][0]:
+                            intersections.append([k, val])
+                            break
+            except Exception as e:
+                print(e)
+
+            for i, v in enumerate(intersections):
+                plt.scatter(v[0], v[1])
+
+            plt.show()
+
             print("Left image has wrong shape {}".format(new1.shape))
 
         try:
@@ -286,8 +332,8 @@ def run_test(path):
     # cv2.line(img, (mins[0][0], img.shape[1]), (mins[0][0], 0), (0, 0, 0))
     # cv2.line(img, (mins[0][1], img.shape[1]), (mins[0][1], 0), (0, 0, 0))
     plt.show()
-    new_images = gnc.split_image(img, np.array([mins[0][0], mins[0][1]]),
-                                 np.array([maxes[0][0], maxes[0][1], maxes[0][2]]))
+    new_images = gnc.split_image(img, mins[0],
+                                 maxes[0])
     cv2.imshow("0", new_images[0])
     cv2.imshow("1", new_images[1])
     cv2.imshow("2", new_images[2])
@@ -321,8 +367,7 @@ def execute(root, file, output):
         return None, None, None
 
     try:
-        new_images = gnc.split_image(image, np.array([mins[0][0], mins[0][1]]),
-                                     np.array([maxes[0][0], maxes[0][1], maxes[0][2]]))
+        new_images = gnc.split_image(image, mins[0], maxes[0])
         new_folder = os.path.join(output, file.split(".jpg")[0])
         return new_images, new_folder, file
     except IndexError as e:
