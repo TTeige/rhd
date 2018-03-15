@@ -200,26 +200,32 @@ class GaussianNormalDistributionCluster:
         try:
             new1 = self.reshape_left_image(mid_points, new1, test_for_value)
         except ValueError as e:
-            intersections = self.find_intersections()
-            new1 = np.array([row[:intersections[0]] for row in image])
-            new1 = self.reshape_left_image(mid_points, new1, test_for_value)
-            print("Left image has wrong shape {}, exception: {}".format(new1.shape, e))
+            try:
+                intersections = self.find_intersections()
+                new1 = np.array([row[:intersections[0]] for row in image])
+                new1 = self.reshape_left_image(mid_points, new1, test_for_value)
+            except Exception as e:
+                print("Left image has wrong shape {}, exception: {}".format(new1.shape, e))
 
         try:
             new2 = self.reshape_middle_image(mid_points, new2, split_points, test_for_value)
         except ValueError as e:
-            intersections = self.find_intersections()
-            new2 = np.array([row[intersections[0]:intersections[1]] for row in image])
-            new2 = self.reshape_middle_image(mid_points, new2, intersections, test_for_value)
-            print("Middle image has wrong shape {}, exception: {}".format(new2.shape, e))
+            try:
+                intersections = self.find_intersections()
+                new2 = np.array([row[intersections[0]:intersections[1]] for row in image])
+                new2 = self.reshape_middle_image(mid_points, new2, intersections, test_for_value)
+            except Exception as e:
+                print("Middle image has wrong shape {}, exception: {}".format(new2.shape, e))
 
         try:
             new3 = self.reshape_right_image(mid_points, new3, split_points, test_for_value)
         except ValueError as e:
-            intersections = self.find_intersections()
-            new3 = np.array([row[intersections[1]:] for row in image])
-            new3 = self.reshape_right_image(mid_points, new3, intersections, test_for_value)
-            print("Right image has wrong shape {}, exception: {}".format(new3.shape, e))
+            try:
+                intersections = self.find_intersections()
+                new3 = np.array([row[intersections[1]:] for row in image])
+                new3 = self.reshape_right_image(mid_points, new3, intersections, test_for_value)
+            except Exception as e:
+                print("Right image has wrong shape {}, exception: {}".format(new3.shape, e))
         all_i = [new1, new2, new3]
 
         return self.resize_images(all_i)
