@@ -9,7 +9,6 @@ import os
 import concurrent.futures as cf
 import time
 import argparse
-from scipy.optimize import root
 
 
 class GaussianNormalDistributionCluster:
@@ -109,7 +108,7 @@ class GaussianNormalDistributionCluster:
         :param num_bins: number of bins to separate the values in to
         :return:
         """
-        plt.hist(x_density, histtype='bar', bins=num_bins)
+        plt.hist(x_density, histtype='bar', normed=True, bins=num_bins)
 
     @staticmethod
     def render_dist(gaussian):
@@ -178,25 +177,6 @@ class GaussianNormalDistributionCluster:
             x_offset = int(abs(image.shape[0] - self.shape[0]) / 2)
             y_offset = int(abs(image.shape[1] - self.shape[1]) / 2)
             reshaped[x_offset:p.shape[0] + x_offset, y_offset:p.shape[1] + y_offset] = p
-            # npix = 0
-            # kernel = np.ones((5, 5))
-            # for row in reshaped:
-            #     for val in row:
-            #         if val > 250:
-            #             npix += 1
-            # if npix > 1500:
-            #     if npix > 1900:
-            #         reshaped = cv2.erode(reshaped, kernel)
-            #         reshaped = cv2.erode(reshaped, kernel)
-            #     else:
-            #         reshaped = cv2.erode(reshaped, kernel)
-            # elif npix < 600:
-            #     if npix < 300:
-            #         reshaped = cv2.dilate(reshaped, kernel)
-            #         reshaped = cv2.dilate(reshaped, kernel)
-            #     else:
-            #         reshaped = cv2.dilate(reshaped, kernel)
-
             completed.append(reshaped)
 
         return completed
@@ -218,105 +198,124 @@ class GaussianNormalDistributionCluster:
             return False
 
         try:
-            # Left image
-            # Extract array from mid point of the digit and switch to column major order
-            from_mid = np.swapaxes(new1[:, mid_points[0]:0:-1], 1, 0)
-            for i in range(0, from_mid.shape[0] - 1):
-                # Iterate from the bottom of the new image
-                # Check if the row contains values
-                if not test_for_value(from_mid[i]):
-                    # Check the next row for values
-                    if not test_for_value(from_mid[i + 1]):
-                        # We found a row without values, and the next does not either
-                        # Copy over the values based on the new first column containing values
-                        new1 = new1[:, mid_points[0] - i:]
-                        break
-            if new1.shape[0] == 0 or new1.shape[1] == 0:
-                raise ValueError
+            new1 = self.reshape_left_image(mid_points, new1, test_for_value)
         except ValueError as e:
-            gaus_and_mid = []
-            for val in self.gaussian_values:
-                gaus_and_mid.append((self.get_maxims(val)[0][0], val))
-            gaus_and_mid = sorted(gaus_and_mid, key=lambda k: k[0])
-            for g in gaus_and_mid:
-                self.render_dist(g[1])
-                plt.scatter(g[0], g[1][g[0]])
-
-            intersections = []
-
-            try:
-                for i in range(0, len(gaus_and_mid) - 1):
-                    for k, val in enumerate(gaus_and_mid[i][1]):
-                        # if math.isclose(val, gaus_and_mid[i + 1][1][k], abs_tol=1e-4) and val > 5.0e-5 and k > \
-                        #         gaus_and_mid[i][0]:
-                        if k == len(gaus_and_mid[i][1]) - 3:
-                            break
-                        a = val
-                        b = gaus_and_mid[i+1][1][k]
-                        c = gaus_and_mid[i][1][k+3]
-                        d = gaus_and_mid[i+1][1][k+3]
-                        if a > c:
-                            tmp = c
-                            c = a
-                            a = tmp
-                        if b > d:
-                            tmp = d
-                            d = b
-                            b = tmp
-                        if (a <= d and c >= b) and k > gaus_and_mid[i][0]:
-                            intersections.append([k, val])
-                            break
-            except Exception as e:
-                print(e)
-
-            for i, v in enumerate(intersections):
-                plt.scatter(v[0], v[1])
-
-            plt.show()
-
-            print("Left image has wrong shape {}".format(new1.shape))
+            intersections = self.find_intersections()
+            new1 = np.array([row[:intersections[0]] for row in image])
+            new1 = self.reshape_left_image(mid_points, new1, test_for_value)
+            print("Left image has wrong shape {}, exception: {}".format(new1.shape, e))
 
         try:
-            # Center image
-            digit_center = mid_points[1] - split_points[0]
-            from_mid = np.swapaxes(new2[:, digit_center:], 1, 0)
-            for i in range(0, from_mid.shape[0] - 1):
-                # Iterate from the top of the new image
-                # Check if the row contains values
-                if not test_for_value(from_mid[i]):
-                    # Check the next row for values
-                    if not test_for_value(from_mid[i - 1]):
-                        # We found a row without values, and the next does not either
-                        # Copy over the values based on the new first column containing values
-                        new2 = new2[:, :i + digit_center]
-                        break
-            if new2.shape[0] == 0 or new2.shape[1] == 0:
-                raise ValueError
+            new2 = self.reshape_middle_image(mid_points, new2, split_points, test_for_value)
         except ValueError as e:
-            print("Middle image has wrong shape {}".format(new2.shape))
+            intersections = self.find_intersections()
+            new2 = np.array([row[intersections[0]:intersections[1]] for row in image])
+            new2 = self.reshape_middle_image(mid_points, new2, intersections, test_for_value)
+            print("Middle image has wrong shape {}, exception: {}".format(new2.shape, e))
 
         try:
-            # Right image
-            # Calculate offset from the total image length
-            digit_center = mid_points[2] - split_points[1]
-            from_mid = np.swapaxes(new3[:, digit_center:], 1, 0)
-            for i in range(0, from_mid.shape[0] - 1):
-                # Iterate from the top of the new image
-                # Check if the row contains values
-                if not test_for_value(from_mid[i]):
-                    # Check the next row for values
-                    if not test_for_value(from_mid[i - 1]):
-                        # We found a row without values, and the next does not either
-                        # Copy over the values based on the new first column containing values
-                        new3 = new3[:, :i + digit_center]
-                        break
-            if new3.shape[0] == 0 or new3.shape[1] == 0:
-                raise ValueError
+            new3 = self.reshape_right_image(mid_points, new3, split_points, test_for_value)
         except ValueError as e:
-            print("Right image has wrong shape {}".format(new3.shape))
-        all_i = np.array([new1, new2, new3])
+            intersections = self.find_intersections()
+            new3 = np.array([row[intersections[1]:] for row in image])
+            new3 = self.reshape_right_image(mid_points, new3, intersections, test_for_value)
+            print("Right image has wrong shape {}, exception: {}".format(new3.shape, e))
+        all_i = [new1, new2, new3]
 
         return self.resize_images(all_i)
+
+    @staticmethod
+    def reshape_right_image(mid_points, new3, split_points, test_for_value):
+        # Right image
+        # Calculate offset from the total image length
+        digit_center = mid_points[2] - split_points[1]
+        from_mid = np.swapaxes(new3[:, digit_center:], 1, 0)
+        for i in range(0, from_mid.shape[0] - 1):
+            # Iterate from the top of the new image
+            # Check if the row contains values
+            if not test_for_value(from_mid[i]):
+                # Check the next row for values
+                if not test_for_value(from_mid[i - 1]):
+                    # We found a row without values, and the next does not either
+                    # Copy over the values based on the new first column containing values
+                    new3 = new3[:, :i + digit_center]
+                    break
+        if new3.shape[0] == 0 or new3.shape[1] == 0:
+            raise ValueError
+        return new3
+
+    @staticmethod
+    def reshape_middle_image(mid_points, new2, split_points, test_for_value):
+        # Center image
+        digit_center = mid_points[1] - split_points[0]
+        from_mid = np.swapaxes(new2[:, digit_center:], 1, 0)
+        for i in range(0, from_mid.shape[0] - 1):
+            # Iterate from the top of the new image
+            # Check if the row contains values
+            if not test_for_value(from_mid[i]):
+                # Check the next row for values
+                if not test_for_value(from_mid[i - 1]):
+                    # We found a row without values, and the next does not either
+                    # Copy over the values based on the new first column containing values
+                    new2 = new2[:, :i + digit_center]
+                    break
+        if new2.shape[0] == 0 or new2.shape[1] == 0:
+            raise ValueError
+        return new2
+
+    @staticmethod
+    def reshape_left_image(mid_points, new1, test_for_value):
+        # Left image
+        # Extract array from mid point of the digit and switch to column major order
+        from_mid = np.swapaxes(new1[:, mid_points[0]:0:-1], 1, 0)
+        for i in range(0, from_mid.shape[0] - 1):
+            # Iterate from the bottom of the new image
+            # Check if the row contains values
+            if not test_for_value(from_mid[i]):
+                # Check the next row for values
+                if not test_for_value(from_mid[i + 1]):
+                    # We found a row without values, and the next does not either
+                    # Copy over the values based on the new first column containing values
+                    new1 = new1[:, mid_points[0] - i:]
+                    break
+        if new1.shape[0] == 0 or new1.shape[1] == 0:
+            raise ValueError
+        return new1
+
+    def find_intersections(self):
+        gaus_and_mid = []
+        for val in self.gaussian_values:
+            gaus_and_mid.append((self.get_maxims(val)[0][0], val))
+        gaus_and_mid = sorted(gaus_and_mid, key=lambda k: k[0])
+        for g in gaus_and_mid:
+            self.render_dist(g[1])
+            plt.scatter(g[0], g[1][g[0]])
+        intersections = []
+        try:
+            for i in range(0, len(gaus_and_mid) - 1):
+                for k, val in enumerate(gaus_and_mid[i][1]):
+                    # if math.isclose(val, gaus_and_mid[i + 1][1][k], abs_tol=1e-4) and val > 5.0e-5 and k > \
+                    #         gaus_and_mid[i][0]:
+                    if k == len(gaus_and_mid[i][1]) - 3:
+                        break
+                    a = val
+                    b = gaus_and_mid[i + 1][1][k]
+                    c = gaus_and_mid[i][1][k + 3]
+                    d = gaus_and_mid[i + 1][1][k + 3]
+                    if a > c:
+                        tmp = c
+                        c = a
+                        a = tmp
+                    if b > d:
+                        tmp = d
+                        d = b
+                        b = tmp
+                    if (a <= d and c >= b) and k > gaus_and_mid[i][0]:
+                        intersections.append(k)
+                        break
+        except Exception as e:
+            print(e)
+        return intersections
 
 
 def run_test(path):
