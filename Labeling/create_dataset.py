@@ -5,6 +5,14 @@ import cv2
 
 
 def parse_single_path(in_file_path, out_file_writer, sep, new_base):
+    """
+    Parses the csv file and writes the new image path based on the given new base and separator
+    :param in_file_path: Path to the csv file containing labels and filenames
+    :param out_file_writer: Python dict writer object
+    :param sep: operating system path delimiter
+    :param new_base: the new base path
+    :return:
+    """
     with open(in_file_path, 'r') as f:
         in_reader = csv.DictReader(f)
         for line in in_reader:
@@ -17,6 +25,14 @@ def parse_single_path(in_file_path, out_file_writer, sep, new_base):
 
 
 def get_names_labels(filename, labels, sep, new_base):
+    """
+    Gets the names and the labels from the given original filename and labels
+    :param filename: Original filename in the the old csv file
+    :param labels: Labels located in the old csv file
+    :param sep: operating system path separator
+    :param new_base: the new base path
+    :return: Returns an array of dicts with {filename: new filename and label: new label}
+    """
     if labels != "" or len(labels) != 3:
         old_full_path = filename.split(sep)
         # The folder name is the same as the image name without the ending
@@ -34,6 +50,14 @@ def get_names_labels(filename, labels, sep, new_base):
 
 
 def parse_single_binary(in_file_path, out_file_writer, sep, new_base):
+    """
+
+    :param in_file_path: Path to the csv file containing labels and filenames
+    :param out_file_writer: Python dict writer object
+    :param sep: operating system path delimiter
+    :param new_base: the new base path
+    :return
+    """
     with open(in_file_path, 'r') as f:
         in_reader = csv.DictReader(f)
         for line in in_reader:
@@ -51,12 +75,30 @@ def parse_single_binary(in_file_path, out_file_writer, sep, new_base):
 
 
 def parse_all(base_path, out_file_writer, sep, new_base, handle_func):
+    """
+    Parses all the files in the given directory
+    :param base_path: root directory containing the csv files
+    :param out_file_writer: Python dict writer object
+    :param sep: operating system path delimiter
+    :param new_base: the new base path
+    :param handle_func: the function to handle the writing. See parse_single_binary or parse_single_path
+    :return:
+    """
     for root, subdirs, files in os.walk(base_path):
         for file in files:
             handle_func(os.path.join(root, file), out_file_writer, sep, new_base)
 
 
 def start(base_path, output_path, input_sep, new_csv_base_path, binary):
+    """
+    Opens the output csv file and chooses the handle_func based on the binary parameter
+    :param base_path: root directory containing the csv files
+    :param output_path: path to the new csv file, full name
+    :param input_sep: the separator present in the input csv files
+    :param new_csv_base_path: replacement path for the new csv file. new_csv_base_path/0_27fs..../*.jpg
+    :param binary: Store the images in binary format in the new csv file. Boolean
+    :return:
+    """
     with open(output_path, 'w') as o:
         if binary:
             out_writer = csv.DictWriter(o, ["image", "filename", "label"])
