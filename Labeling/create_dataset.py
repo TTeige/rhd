@@ -24,10 +24,12 @@ def get_names_labels(filename, labels, sep, new_base):
         for i, l in enumerate(labels):
             single_filename = str(i) + "_" + old_full_path[-1]
             new_full_path = os.path.join(new_base, folder_name, single_filename)
+            if not os.path.isfile(new_full_path):
+                raise ValueError("File does not exist at path: {}".format(new_full_path))
             ret_val.append({"filename": new_full_path, "label": l})
         return ret_val
     else:
-        raise ValueError
+        raise ValueError("Invalid label size: {}".format(labels))
 
 
 def parse_single_binary(in_file_path, out_file_writer, sep, new_base):
@@ -43,7 +45,7 @@ def parse_single_binary(in_file_path, out_file_writer, sep, new_base):
                 out_file_writer.writerows(vals)
             except (ValueError, TypeError, AttributeError) as e:
                 if type(e) is AttributeError:
-                    print("Exception: {} occured for line {}".format(e, line))
+                    print("Exception: {} occurred for line {}".format(e, line))
                 continue
 
 
