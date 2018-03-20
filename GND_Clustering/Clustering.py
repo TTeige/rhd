@@ -47,6 +47,9 @@ class GaussianNormalDistributionCluster:
         :return: ndarray of pixel values, grayscale
         """
         self.image = cv2.imread(path, 0)
+        affine = np.array([[1, 0, 0], [-0.3, 1, 0], [0, 0, 1]])
+        img = affine_transform(self.image, affine, cval=255)
+        self.image = img
         if self.image is None:
             print("Unable to load image, check path")
             raise ValueError
@@ -63,10 +66,7 @@ class GaussianNormalDistributionCluster:
         rows, cols = self.image.shape
 
         np.random.seed(0)
-        affine = np.array([[1, 0, 0], [-0.3, 1, 0], [0, 0, 1]])
-        img = affine_transform(self.image, affine, cval=255)
-        self.image = img
-        img_flat = img.flatten()
+        img_flat = self.image.flatten()
         img_flat = [v / 255 for v in img_flat]
         img_flat = np.array(img_flat)
         x_density = []
@@ -342,13 +342,13 @@ def run_test(path):
     plt.show()
     new_images, _, _ = execute(".", path, ".")
 
-    cv2.line(img, (mins[0][0], img.shape[1]), (mins[0][0], 0), 0)
-    cv2.line(img, (mins[0][1], img.shape[1]), (mins[0][1], 0), 0)
+    cv2.line(gnc.image, (mins[0][0], img.shape[1]), (mins[0][0], 0), 0)
+    cv2.line(gnc.image, (mins[0][1], img.shape[1]), (mins[0][1], 0), 0)
 
     cv2.imshow("0", new_images[0])
     cv2.imshow("1", new_images[1])
     cv2.imshow("2", new_images[2])
-    cv2.imshow("image", img)
+    cv2.imshow("image", gnc.image)
     cv2.waitKey()
 
 
