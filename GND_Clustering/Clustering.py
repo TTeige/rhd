@@ -49,6 +49,7 @@ class GaussianNormalDistributionCluster:
         self.image = cv2.imread(path, 0)
         affine = np.array([[1, 0, 0], [-0.3, 1, 0], [0, 0, 1]])
         img = affine_transform(self.image, affine, cval=255)
+        img = cv2.GaussianBlur(img, (5, 5), 0)
         self.image = img
         if self.image is None:
             print("Unable to load image, check path")
@@ -289,13 +290,14 @@ class GaussianNormalDistributionCluster:
     def find_intersections(self):
         """
         Finds the intersection between the gaussian functions. These are loaded from the class and assumes that the
-        gaussian functions have already been created. Fails with an exception by default if the functions are not created
+        gaussian functions have already been created. Fails with an exception by default if the functions are not
+        created
         :return:
         """
         gaus_and_mid = []
         for val in self.gaussian_values:
             gaus_and_mid.append((self.get_maxims(val)[0][0], val))
-        gaus_and_mid = sorted(gaus_and_mid, key=lambda k: k[0])
+        gaus_and_mid = sorted(gaus_and_mid, key=lambda q: q[0])
         intersections = []
         try:
             for i in range(0, len(gaus_and_mid) - 1):
@@ -338,7 +340,6 @@ def run_test(path):
     mins = gnc.get_minimas(sum_g)
     maxes = gnc.get_maxims(sum_g)
     plt.scatter(np.append(mins[0], maxes[0]), np.append(sum_g[mins[0]], sum_g[maxes[0]]), c='r', zorder=10)
-    print(mins[0], sum_g[mins[0]])
     plt.show()
     new_images, _, _ = execute(".", path, ".")
 
