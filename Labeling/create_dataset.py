@@ -12,6 +12,7 @@ def parse_single_path(in_file_path, out_file_writer, sep, new_base):
                 vals = get_names_labels(line["filename"], line["label"], sep, new_base)
                 out_file_writer.writerows(vals)
             except (ValueError, TypeError) as e:
+                print(e)
                 continue
 
 
