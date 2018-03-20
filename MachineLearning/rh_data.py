@@ -1,9 +1,10 @@
 import cv2
-from random import shuffle
 import numpy as np
+import keras
+from random import shuffle
 
 
-class RHData:
+class RHData(keras.utils.Sequence):
     def __init__(self, data, batch_size):
         """
         Class which encapsulates the data needed for training the classification model
