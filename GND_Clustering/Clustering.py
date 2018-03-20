@@ -27,8 +27,6 @@ class GaussianNormalDistributionCluster:
         self.components = num_components
         self.shape = (100, 100)
         self.gaussian_values = None
-        self.mu = None
-        self.sig = None
 
     @staticmethod
     def gaussian(x, mu, sig, weight):
@@ -70,10 +68,10 @@ class GaussianNormalDistributionCluster:
         self.image = img
         img_flat = img.flatten()
         img_flat = [v / 255 for v in img_flat]
-
+        img_flat = np.array(img_flat)
         x_density = []
         for i in range(0, len(img_flat)):
-            if img_flat[i] < 0.1:
+            if img_flat[i] < 0.2:
                 x_density.append(np.array([i % cols]))
 
         return np.array(x_density)
@@ -93,6 +91,11 @@ class GaussianNormalDistributionCluster:
         return minims
 
     def get_maxims(self, summed_gaussian=None):
+        """
+        Finds the maximum points for the summed gaussian function. Can handle single gaussian functions as well.
+        :param summed_gaussian: Function of which to find the local maximum
+        :return: array of local maximum values
+        """
         if summed_gaussian is None:
             summed_gaussian = self.get_summed_gaussian()
             if summed_gaussian is None:
@@ -139,8 +142,6 @@ class GaussianNormalDistributionCluster:
 
         mu = gmm.means_.flatten()
         sig = gmm.covariances_.flatten()
-        self.mu = mu
-        self.sig = sig
         gausses = []
         for i in range(0, len(mu)):
             g = self.gaussian(np.arange(self.image.shape[1]), mu[i], sig[i], gmm.weights_[i])
@@ -153,8 +154,6 @@ class GaussianNormalDistributionCluster:
     def resize_images(self, images):
         completed = []
         for image in images:
-            if image is None:
-                print("Wat")
             if image.shape[0] == 0:
                 print("The image shape on the x axis is {}".format(image.shape[0]))
             if image.shape[1] == 0:
@@ -182,13 +181,17 @@ class GaussianNormalDistributionCluster:
         return completed
 
     def split_image(self, image, split_points, mid_points):
+        """
+        Splits the image based on the location of the minimum points given by the summed gaussian function
+        :param image: Input image in grayscale
+        :param split_points: Local minimum points of the summed gaussian function
+        :param mid_points: Maximum points of the summed gaussian function
+        :return: an array of the split images
+        """
         image = cv2.bitwise_not(image)
-        new1 = [row[:split_points[0]] for row in image]
-        new2 = [row[split_points[0]:split_points[1]] for row in image]
-        new3 = [row[split_points[1]:] for row in image]
-        new1 = np.array(new1)
-        new2 = np.array(new2)
-        new3 = np.array(new3)
+        new1 = np.array([row[:split_points[0]] for row in image])
+        new2 = np.array([row[split_points[0]:split_points[1]] for row in image])
+        new3 = np.array([row[split_points[1]:] for row in image])
 
         def test_for_value(col):
             for col_val in col:
@@ -198,110 +201,105 @@ class GaussianNormalDistributionCluster:
             return False
 
         try:
-            new1 = self.reshape_left_image(mid_points, new1, test_for_value)
+            new1 = self.reshape_left_image(new1, test_for_value, mid_points[0])
         except ValueError as e:
             try:
                 intersections = self.find_intersections()
                 new1 = np.array([row[:intersections[0]] for row in image])
-                new1 = self.reshape_left_image(mid_points, new1, test_for_value)
+                new1 = self.reshape_left_image(new1, test_for_value, mid_points[0])
             except Exception as e:
                 print("Left image has wrong shape {}, exception: {}".format(new1.shape, e))
+                return None
 
         try:
-            new2 = self.reshape_middle_image(mid_points, new2, split_points, test_for_value)
+            new2 = self.reshape_middle_image(new2, test_for_value, mid_points[1] - split_points[0])
         except ValueError as e:
             try:
                 intersections = self.find_intersections()
                 new2 = np.array([row[intersections[0]:intersections[1]] for row in image])
-                new2 = self.reshape_middle_image(mid_points, new2, intersections, test_for_value)
+                new2 = self.reshape_middle_image(new2, test_for_value, mid_points[1] - intersections[0])
             except Exception as e:
                 print("Middle image has wrong shape {}, exception: {}".format(new2.shape, e))
+                return None
 
         try:
-            new3 = self.reshape_right_image(mid_points, new3, split_points, test_for_value)
+            new3 = self.reshape_right_image(new3, test_for_value, mid_points[2] - split_points[1])
         except ValueError as e:
             try:
                 intersections = self.find_intersections()
                 new3 = np.array([row[intersections[1]:] for row in image])
-                new3 = self.reshape_right_image(mid_points, new3, intersections, test_for_value)
+                new3 = self.reshape_right_image(new3, test_for_value, mid_points[2] - intersections[1])
             except Exception as e:
                 print("Right image has wrong shape {}, exception: {}".format(new3.shape, e))
+                return None
         all_i = [new1, new2, new3]
 
         return self.resize_images(all_i)
 
     @staticmethod
-    def reshape_right_image(mid_points, new3, split_points, test_for_value):
+    def reshape_right_image(new3, test_for_value, digit_center_point):
         # Right image
         # Calculate offset from the total image length
-        digit_center = mid_points[2] - split_points[1]
-        from_mid = np.swapaxes(new3[:, digit_center:], 1, 0)
-        for i in range(0, from_mid.shape[0] - 1):
+        from_mid = np.swapaxes(new3[:, digit_center_point:], 1, 0)
+        for i in range(0, from_mid.shape[0] - 2, 2):
             # Iterate from the top of the new image
             # Check if the row contains values
             if not test_for_value(from_mid[i]):
                 # Check the next row for values
-                if not test_for_value(from_mid[i - 1]):
+                if not test_for_value(from_mid[i + 1]) and not test_for_value(from_mid[i + 2]):
                     # We found a row without values, and the next does not either
                     # Copy over the values based on the new first column containing values
-                    new3 = new3[:, :i + digit_center]
+                    new3 = new3[:, :i + digit_center_point]
                     break
         if new3.shape[0] == 0 or new3.shape[1] == 0:
             raise ValueError
         return new3
 
     @staticmethod
-    def reshape_middle_image(mid_points, new2, split_points, test_for_value):
-        # Center image
-        digit_center = mid_points[1] - split_points[0]
-        from_mid = np.swapaxes(new2[:, digit_center:], 1, 0)
-        for i in range(0, from_mid.shape[0] - 1):
-            # Iterate from the top of the new image
-            # Check if the row contains values
-            if not test_for_value(from_mid[i]):
-                # Check the next row for values
-                if not test_for_value(from_mid[i - 1]):
-                    # We found a row without values, and the next does not either
-                    # Copy over the values based on the new first column containing values
-                    new2 = new2[:, :i + digit_center]
-                    break
+    def reshape_middle_image(new2, test_for_value, digit_center_point):
+        # left = self.reshape_left_image(new2, test_for_value, digit_center_point)
+        # right = self.reshape_right_image(new2, test_for_value, digit_center_point)
+        # if left.shape[0] < right.shape[0]:
+        #     new2 = left
+        # else:
+        #     new2 = right
         if new2.shape[0] == 0 or new2.shape[1] == 0:
             raise ValueError
         return new2
 
     @staticmethod
-    def reshape_left_image(mid_points, new1, test_for_value):
+    def reshape_left_image(new1, test_for_value, digit_center_point):
         # Left image
         # Extract array from mid point of the digit and switch to column major order
-        from_mid = np.swapaxes(new1[:, mid_points[0]:0:-1], 1, 0)
-        for i in range(0, from_mid.shape[0] - 1):
+        from_mid = np.swapaxes(new1[:, digit_center_point:0:-1], 1, 0)
+        for i in range(0, from_mid.shape[0] - 2, 2):
             # Iterate from the bottom of the new image
             # Check if the row contains values
             if not test_for_value(from_mid[i]):
                 # Check the next row for values
-                if not test_for_value(from_mid[i + 1]):
+                if not test_for_value(from_mid[i + 1]) and not test_for_value(from_mid[i + 2]):
                     # We found a row without values, and the next does not either
                     # Copy over the values based on the new first column containing values
-                    new1 = new1[:, mid_points[0] - i:]
+                    new1 = new1[:, digit_center_point - i:]
                     break
         if new1.shape[0] == 0 or new1.shape[1] == 0:
             raise ValueError
         return new1
 
     def find_intersections(self):
+        """
+        Finds the intersection between the gaussian functions. These are loaded from the class and assumes that the
+        gaussian functions have already been created. Fails with an exception by default if the functions are not created
+        :return:
+        """
         gaus_and_mid = []
         for val in self.gaussian_values:
             gaus_and_mid.append((self.get_maxims(val)[0][0], val))
         gaus_and_mid = sorted(gaus_and_mid, key=lambda k: k[0])
-        for g in gaus_and_mid:
-            self.render_dist(g[1])
-            plt.scatter(g[0], g[1][g[0]])
         intersections = []
         try:
             for i in range(0, len(gaus_and_mid) - 1):
                 for k, val in enumerate(gaus_and_mid[i][1]):
-                    # if math.isclose(val, gaus_and_mid[i + 1][1][k], abs_tol=1e-4) and val > 5.0e-5 and k > \
-                    #         gaus_and_mid[i][0]:
                     if k == len(gaus_and_mid[i][1]) - 3:
                         break
                     a = val
@@ -325,7 +323,12 @@ class GaussianNormalDistributionCluster:
 
 
 def run_test(path):
-    np.random.seed(0)
+    """
+    Test run against single images
+    :param path: path to the image
+    :return:
+    """
+    # np.random.seed(0)
     gnc = GaussianNormalDistributionCluster()
     img = gnc.load_image(path)
     x_density = gnc.get_x_density()
@@ -334,14 +337,18 @@ def run_test(path):
     gnc.render_dist(sum_g)
     mins = gnc.get_minimas(sum_g)
     maxes = gnc.get_maxims(sum_g)
-    # cv2.line(img, (mins[0][0], img.shape[1]), (mins[0][0], 0), (0, 0, 0))
-    # cv2.line(img, (mins[0][1], img.shape[1]), (mins[0][1], 0), (0, 0, 0))
+    plt.scatter(np.append(mins[0], maxes[0]), np.append(sum_g[mins[0]], sum_g[maxes[0]]), c='r', zorder=10)
+    print(mins[0], sum_g[mins[0]])
     plt.show()
-    new_images = gnc.split_image(img, mins[0],
-                                 maxes[0])
+    new_images, _, _ = execute(".", path, ".")
+
+    cv2.line(img, (mins[0][0], img.shape[1]), (mins[0][0], 0), 0)
+    cv2.line(img, (mins[0][1], img.shape[1]), (mins[0][1], 0), 0)
+
     cv2.imshow("0", new_images[0])
     cv2.imshow("1", new_images[1])
     cv2.imshow("2", new_images[2])
+    cv2.imshow("image", img)
     cv2.waitKey()
 
 
@@ -357,10 +364,12 @@ def execute(root, file, output):
     path = os.path.join(root, file)
     try:
         image = gnc.load_image(path)
-        mins = gnc.get_minimas()
+        x_density = gnc.get_x_density()
+        sum_g = gnc.get_summed_gaussian(x_density)
+        mins = gnc.get_minimas(sum_g)
         if mins is None:
             return None, None, None
-        maxes = gnc.get_maxims()
+        maxes = gnc.get_maxims(sum_g)
         if maxes is None:
             return None, None, None
     except ValueError as e:
@@ -373,6 +382,8 @@ def execute(root, file, output):
 
     try:
         new_images = gnc.split_image(image, mins[0], maxes[0])
+        if new_images is None:
+            return None, None, None
         new_folder = os.path.join(output, file.split(".jpg")[0])
         return new_images, new_folder, file
     except IndexError as e:
@@ -399,6 +410,13 @@ def handle_done(done):
 
 
 def run_parallel(path, out):
+    """
+    Launches the parallel executor and submits all the jobs. This function parses the entire folder structure and keeps
+    it in memory
+    :param path: Input path to the root of the images
+    :param out: Output path of the segmented images
+    :return:
+    """
     np.random.seed(0)
     start_time = time.time()
     futures = []
