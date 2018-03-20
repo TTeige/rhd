@@ -19,11 +19,12 @@ class GaussianNormalDistributionCluster:
     The load_image(path) method must be called before using any other method.
     """
 
-    def __init__(self, num_components=3):
+    def __init__(self, num_components=3, img=None):
         """
         :param num_components: number of gaussian normal distributions
+        :param img: image to process
         """
-        self.image = None
+        self.image = img
         self.components = num_components
         self.shape = (100, 100)
         self.gaussian_values = None
