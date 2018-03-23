@@ -4,7 +4,8 @@ import concurrent.futures as cf
 
 
 class ParallelExecutor:
-    def __init__(self, cf_reader, img_parser, pf_handler, workers, num_to_do, output_dir):
+    def __init__(self, db, cf_reader, img_parser, pf_handler, workers, num_to_do, output_dir):
+        self.db = db
         self.cf_reader = cf_reader
         self.img_parser = img_parser
         self.pf_handler = pf_handler
@@ -52,10 +53,11 @@ class ParallelExecutor:
         rows, fn = done.result()
         fn = fn.split(os.path.sep)[-1]
         self.pf_handler.update_file(fn + '\n')
-        self.img_parser.write_field_image(fn, rows, self.output_dir)
+        self.img_parser.write_field_image(fn, rows, self.db)
         futures.remove(done)
         self.num_completed += 1
         if self.num_completed % 10 == 0:
+            self.db.connection.commit()
             print(str(self.num_completed / num_reads * 100) + "%")
 
     def skip_image(self, img_filename):

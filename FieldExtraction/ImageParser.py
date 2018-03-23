@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-import os
 
 
 class ImageParser:
@@ -55,14 +54,11 @@ class ImageParser:
         return image_fields, filename
 
     @staticmethod
-    def write_field_image(fn, rows, output_dir):
-        fn_path = os.path.join(output_dir, fn.split(".")[0])
-        if not os.path.exists(fn_path):
-            os.mkdir(fn_path)
+    def write_field_image(fn, rows, db):
         for row in rows:
             for field in row[0]:
-                field_name = os.path.join(fn_path, str(row[1]) + "_" + str(field[1]) + fn)
-                cv2.imwrite(field_name, field[0])
+                field_name = str(row[1]) + "_" + str(field[1]) + fn
+                db.store_field(field_name, field[0])
 
     @staticmethod
     def _convert_img(img):
