@@ -5,10 +5,10 @@ from sklearn.mixture import GaussianMixture
 import math
 from scipy.ndimage import affine_transform
 from scipy.signal import argrelmin, argrelmax
-import os
 import concurrent.futures as cf
 import time
 import argparse
+from Database.dbHandler import DbHandler
 
 
 class GaussianNormalDistributionCluster:
@@ -19,12 +19,12 @@ class GaussianNormalDistributionCluster:
     The load_image(path) method must be called before using any other method.
     """
 
-    def __init__(self, num_components=3, img=None):
+    def __init__(self, num_components=3):
         """
         :param num_components: number of gaussian normal distributions
         :param img: image to process
         """
-        self.image = img
+        self.image = None
         self.components = num_components
         self.shape = (100, 100)
         self.gaussian_values = None
@@ -41,20 +41,22 @@ class GaussianNormalDistributionCluster:
         """
         return (np.exp(-np.power(x - mu, 2.) / (2 * sig)) / (math.sqrt(2 * math.pi) * math.sqrt(sig))) * weight
 
-    def load_image(self, path):
+    def load_image(self, img, width, height):
         """
         Loads an image in grayscale using opencv
-        :param path: path to the image
+        :param img: image in byte values
         :return: ndarray of pixel values, grayscale
+        :type:ndarray
         """
-        self.image = cv2.imread(path, 0)
+
+        bytearray = np.fromstring(img, np.uint8)
+        self.image = bytearray.reshape([width, height])
         affine = np.array([[1, 0, 0], [-0.3, 1, 0], [0, 0, 1]])
         img = affine_transform(self.image, affine, cval=255)
         img = cv2.GaussianBlur(img, (5, 5), 0)
         self.image = img
         if self.image is None:
-            print("Unable to load image, check path")
-            raise ValueError
+            raise ValueError("Unable to load image, check path")
         return self.image
 
     def get_x_density(self):
@@ -214,12 +216,12 @@ class GaussianNormalDistributionCluster:
                 return None
 
         try:
-            new2 = self.reshape_middle_image(new2, test_for_value, mid_points[1] - split_points[0])
+            new2 = self.reshape_middle_image(new2)
         except ValueError as e:
             try:
                 intersections = self.find_intersections()
                 new2 = np.array([row[intersections[0]:intersections[1]] for row in image])
-                new2 = self.reshape_middle_image(new2, test_for_value, mid_points[1] - intersections[0])
+                new2 = self.reshape_middle_image(new2)
             except Exception as e:
                 print("Middle image has wrong shape {}, exception: {}".format(new2.shape, e))
                 return None
@@ -258,7 +260,7 @@ class GaussianNormalDistributionCluster:
         return new3
 
     @staticmethod
-    def reshape_middle_image(new2, test_for_value, digit_center_point):
+    def reshape_middle_image(new2):
         # left = self.reshape_left_image(new2, test_for_value, digit_center_point)
         # right = self.reshape_right_image(new2, test_for_value, digit_center_point)
         # if left.shape[0] < right.shape[0]:
@@ -325,15 +327,17 @@ class GaussianNormalDistributionCluster:
         return intersections
 
 
-def run_test(path):
+def run_test(db_loc, image_name="4_27fs10061402170627.jpg"):
     """
     Test run against single images
     :param path: path to the image
     :return:
     """
     # np.random.seed(0)
+    db = DbHandler(db_loc)
+    db_image_entry = db.select_image(image_name)
     gnc = GaussianNormalDistributionCluster()
-    img = gnc.load_image(path)
+    img = gnc.load_image(db_image_entry[1], db_image_entry[2], db_image_entry[3])
     x_density = gnc.get_x_density()
     gnc.render_hist(x_density)
     sum_g = gnc.get_summed_gaussian(x_density)
@@ -342,7 +346,7 @@ def run_test(path):
     maxes = gnc.get_maxims(sum_g)
     plt.scatter(np.append(mins[0], maxes[0]), np.append(sum_g[mins[0]], sum_g[maxes[0]]), c='r', zorder=10)
     plt.show()
-    new_images, _, _ = execute(".", path, ".")
+    new_images, _, _ = execute("", db_image_entry[1], db_image_entry[2], db_image_entry[3])
 
     cv2.line(gnc.image, (mins[0][0], img.shape[1]), (mins[0][0], 0), 0)
     cv2.line(gnc.image, (mins[0][1], img.shape[1]), (mins[0][1], 0), 0)
@@ -354,69 +358,73 @@ def run_test(path):
     cv2.waitKey()
 
 
-def execute(root, file, output):
+def execute(name, img, height, width):
     """
     Function to handle the launching of a parallel task
-    :param output: path to output location
-    :param root: root directory
-    :param file: name of the file
-    :return: list of images separated, name of the new folder, name of the new file
+    :param name: Name of the image
+    :param img: image
+    :return: list of images separated, name of the file, error message if not completed
     """
     gnc = GaussianNormalDistributionCluster()
-    path = os.path.join(root, file)
     try:
-        image = gnc.load_image(path)
+        image = gnc.load_image(img, width, height)
         x_density = gnc.get_x_density()
         sum_g = gnc.get_summed_gaussian(x_density)
         mins = gnc.get_minimas(sum_g)
         if mins is None:
-            return None, None, None
+            return None, name, "No minimums found"
         maxes = gnc.get_maxims(sum_g)
         if maxes is None:
-            return None, None, None
+            return None, name, "No maximums found"
     except ValueError as e:
         # Unsure of what exactly happens here, but the x_density vector is only a single dimension
         # which causes the GMM to fail. This can happen if there is only a single row containing pixels, or none
         # These images are however not relevant and can be skipped.
 
-        print("{} Skipping image at path: {} due to lacking values in x_density".format(e, path))
-        return None, None, None
+        print("{} Skipping image at path: {} due to lacking values in x_density".format(e, name))
+        return None, name, " lacking values in x_density. Exception {}".format(e)
 
     try:
         new_images = gnc.split_image(image, mins[0], maxes[0])
         if new_images is None:
-            return None, None, None
-        new_folder = os.path.join(output, file.split(".jpg")[0])
-        return new_images, new_folder, file
+            return None, name, "No images returned"
+        return new_images, name, ""
     except IndexError as e:
         # Only one minima is found, this is the wrong result for the profession field. Should be two minimas
         # So these images are just skipped.
-        print("{} Skipping image at path: {} due to single minima or maxima".format(e, path))
-        return None, None, None
+        print("{} Skipping image at path: {} due to single minima or maxima".format(e, name))
+        return None, name, "single minima or maxima. Exception {}".format(e)
 
 
-def handle_done(done):
+def handle_done(done, db):
     """
     Function to handle the output of a parallel task
-    :param done: Handle to the concurrent.future task object
+    :param done: Handle to the result
+    :type: Future
+    :param db: database handler
+    :type: DbHandler
     :return:
     """
-    new_images, new_folder, file = done.result()
-    if new_images is None or new_folder is None or file is None:
-        return
-    if not os.path.exists(new_folder):
-        os.mkdir(new_folder)
-    for i, im in enumerate(new_images):
-        new_image_filename = os.path.join(str(new_folder), str(i) + "_" + file)
-        cv2.imwrite(new_image_filename, im)
+    new_images, name, err = done.result()
+    if new_images is None or err != "":
+        try:
+            db.store_dropped(name, err)
+        except Exception as e:
+            print(e)
+    else:
+        for i, im in enumerate(new_images):
+            name = str(i) + "_" + name
+            try:
+                db.store_digit(name, im)
+            except Exception as e:
+                print(e)
 
 
-def run_parallel(path, out):
+def run_parallel(db_loc):
     """
     Launches the parallel executor and submits all the jobs. This function parses the entire folder structure and keeps
     it in memory
-    :param path: Input path to the root of the images
-    :param out: Output path of the segmented images
+    :param db_loc: database location, full path
     :return:
     """
     np.random.seed(0)
@@ -428,21 +436,18 @@ def run_parallel(path, out):
     image_strings = []
     # All usage of image strings might be volatile
     with cf.ProcessPoolExecutor(max_workers=8) as executor:
-        for root, subdirs, files in os.walk(path):
-            for file in files:
-                num_read += 1
-                image_strings.append((root, file))
+        with DbHandler(db_loc) as db:
+            for db_img in db.select_all_images():
+                futures.append(executor.submit(execute, db_img[0], db_img[1], db_img[2], db_img[3]))
 
-        for name in image_strings:
-            futures.append(executor.submit(execute, name[0], name[1], out))
-
-        for done in cf.as_completed(futures):
-            handle_done(done)
-            futures.remove(done)
-            num += 1
-            if num % 100 == 0:
-                print("Number of images segmented is: {} out of a total of {}".format(num, num_read))
-        print("--- " + str(time.time() - start_time) + " ---")
+            for done in cf.as_completed(futures):
+                handle_done(done, db)
+                futures.remove(done)
+                num += 1
+                if num % 100 == 0:
+                    print("Number of images segmented is: {} out of a total of {}".format(num, num_read))
+                    db.connection.commit()
+            print("--- " + str(time.time() - start_time) + " ---")
 
 
 def handle_main():
@@ -451,11 +456,13 @@ def handle_main():
     arg.add_argument("-p", "--path", type=str,
                      help="path to root directory if not running test. If test, full path to image")
     arg.add_argument("-o", "--output", type=str, help="output path")
+    arg.add_argument("--db", type=str, help="full path to database location",
+                     default="/mnt/remote/Yrke/ft1950_ml.db")
     args = arg.parse_args()
     if args.test:
-        run_test(args.path)
+        run_test(args.db)
     else:
-        run_parallel(args.path, args.output)
+        run_parallel(args.db)
 
 
 if __name__ == '__main__':
