@@ -144,6 +144,8 @@ class SingleView(tk.Frame):
         components = self.img_dir.split("/")
         if os.path.sep == "\\":
             components[0] += "\\"
+        else:
+            components[0] = "/"
         self.img_dir = ""
         for i in components:
             self.img_dir = os.path.join(self.img_dir, i)
