@@ -26,6 +26,8 @@ python3 FieldSplitter.py <path/to/coordinate_file>
 
 Use `python3 FieldSplitter.py help` for more parameters
 
+## Clustering
+The clustering directory contains the script for using the multi component gaussian normal distribution clustering algorithm. The directory also contains the algorithm for clustering the training set based on the geometric shapes in the single digit images.
 
 ## Machine Learning - Handwritten digit training and predictions
 
