@@ -2,6 +2,13 @@
 
 This repository contains files in regards to work done for Registreringssentralen fro historisk data. The code is intended for usage on the 1950 consensus in Norway.
 
+## Naming convetion of images in the database
+
+x_y_zfs10....jpg. 
+- __x__ - Identifies the index in the field
+- __y__ - Identifies the row index in the image
+- __z__ - Identifies the field index in the image
+
 ## Image Parser
 
 The image parser directory contains a program for parsing 1950s concencus images based on a coordinate file provided by AnalyseForm.
@@ -45,9 +52,14 @@ to be processed.
         - _extract_field - Fetches the given segment from the image. 
       - _convert_image - Converts the image to grayscale and mask the digit from the field.
 
+### Notes
+Can contain bugs when it comes to defining target columns. See the constructor of ImageParser.py. 
 
 ## Clustering
 The clustering directory contains the script for using the multi component gaussian normal distribution clustering algorithm. The directory also contains the algorithm for clustering the training set based on the geometric shapes in the single digit images.
+
+### Notes
+Currently the multi component gaussian distribution clustering algorithm only support three digit images. There is a simple solution to fix this. Depending on the image name the expected number of local maxima and minimas should change. 
 
 ## Machine Learning - Handwritten digit training and predictions
 
