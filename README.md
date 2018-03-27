@@ -9,6 +9,8 @@ x_y_zfs10....jpg.
 - __y__ - Identifies the row index in the image
 - __z__ - Identifies the field index in the image
 
+These values should instead be stored in the database. This has not yet been done since the database was just recently added.
+
 ## Image Parser
 
 The image parser directory contains a program for parsing 1950s concencus images based on a coordinate file provided by AnalyseForm.
