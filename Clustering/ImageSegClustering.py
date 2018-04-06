@@ -408,11 +408,14 @@ def run_parallel(db_loc):
     num = 0
     with cf.ProcessPoolExecutor(max_workers=8) as executor:
         with DbHandler(db_loc) as db:
-            num_read = db.count_rows_in_fields().fetchone()
-            all_selected = db.select_all_images()
-            while all_selected.fetchmany(1000):
-                for db_img in all_selected:
-                    futures.append(executor.submit(execute, db_img[0], db_img[1], db_img[2], db_img[3]))
+            num_read = db.count_rows_in_fields().fetchone()[0]
+            rows = db.select_all_images()
+            while True:
+                db_img = rows.fetchone()
+                if db_img is None:
+                    print("All futures created")
+                    break
+                futures.append(executor.submit(execute, db_img[0], db_img[1], db_img[2], db_img[3]))
 
             for done in cf.as_completed(futures):
                 handle_done(done, db)
