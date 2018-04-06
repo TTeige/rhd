@@ -424,14 +424,15 @@ def run_parallel(db_loc):
                         break
                     if db.test_exists_digit(db_img[0]):
                         num_skipped += 1
+                        if num_skipped % 100 == 0:
+                            print("Skipped " + str(num_skipped) + " images so far")
                         continue
 
-                    futures.append(executor.submit(execute, db_img[0], db_img[1], db_img[2], db_img[3]))
                     num_submitted += 1
-                    if num_skipped % 100 == 0:
-                        print("Skipped " + str(num_skipped) + " images so far")
                     if num_submitted % 100 == 0:
                         print("Submitted " + str(num_submitted) + " images so far")
+
+                    futures.append(executor.submit(execute, db_img[0], db_img[1], db_img[2], db_img[3]))
             except TypeError as e:
                 print(e)
 
