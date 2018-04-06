@@ -12,6 +12,7 @@ class DbHandler:
             self.cursor = self.connection.cursor()
 
     def store_field(self, name, img):
+        # Name, raw byte data, height width
         self.cursor.execute('insert or IGNORE into fields VALUES (?, ?, ?, ?)', (name, img, img.shape[0], img.shape[1]))
 
     def store_digit(self, name, img):
