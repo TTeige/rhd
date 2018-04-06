@@ -37,6 +37,9 @@ class DbHandler:
     def count_rows_in_digit(self):
         return self.cursor.execute("SELECT Count(*) FROM digit")
 
+    def count_rows_in_dropped(self):
+        return self.cursor.execute("SELECT Count(*) FROM dropped")
+
     def __enter__(self):
         try:
             if self.connection is None:
