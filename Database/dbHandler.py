@@ -21,7 +21,7 @@ class DbHandler:
         self.cursor.execute('insert or IGNORE into dropped VALUES (?, ?)', (name, reason))
 
     def test_exists(self, name):
-        self.cursor.execute("SELECT EXISTS(SELECT 1 FROM fields VALUES (?) LIMIT 1)", (name))
+        self.cursor.execute("SELECT EXISTS(SELECT 1 FROM fields VALUES (?) LIMIT 1)", name)
         return self.cursor.fetchone()
 
     def select_image(self, name):
