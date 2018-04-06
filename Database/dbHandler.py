@@ -31,6 +31,9 @@ class DbHandler:
     def select_all_images(self):
         return self.cursor.execute("SELECT * FROM fields")
 
+    def count_rows_in_table(self, table_name):
+        return self.cursor.execute("SELECT Count(*) FROM :table_name", {'table_name': table_name})
+
     def __enter__(self):
         try:
             if self.connection is None:

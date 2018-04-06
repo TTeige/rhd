@@ -431,12 +431,12 @@ def run_parallel(db_loc):
     start_time = time.time()
     futures = []
     num = 0
-    num_read = 0
     # The following is not big data safe, could run out of memory, best would be to create a stream, but python....
     image_strings = []
     # All usage of image strings might be volatile
     with cf.ProcessPoolExecutor(max_workers=8) as executor:
         with DbHandler(db_loc) as db:
+            num_read = db.count_rows_in_table("fields")
             for db_img in db.select_all_images():
                 futures.append(executor.submit(execute, db_img[0], db_img[1], db_img[2], db_img[3]))
 
@@ -453,9 +453,6 @@ def run_parallel(db_loc):
 def handle_main():
     arg = argparse.ArgumentParser("Extract individual digits from image")
     arg.add_argument("-t", "--test", action="store_true", default=False, help="Run the program in test_mode")
-    arg.add_argument("-p", "--path", type=str,
-                     help="path to root directory if not running test. If test, full path to image")
-    arg.add_argument("-o", "--output", type=str, help="output path")
     arg.add_argument("--db", type=str, help="full path to database location",
                      default="/mnt/remote/Yrke/ft1950_ml.db")
     args = arg.parse_args()
