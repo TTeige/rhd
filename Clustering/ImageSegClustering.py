@@ -407,43 +407,50 @@ def run_parallel(db_loc):
     np.random.seed(0)
     start_time = time.time()
     futures = []
-    num = 0
     with cf.ProcessPoolExecutor(max_workers=8) as executor:
         with DbHandler(db_loc) as db:
-            num_read = db.count_rows_in_fields().fetchone()[0]
-            num_submitted = 0
-            num_skipped = 0
-            try:
-                rows = db.select_all_images()
-                while True:
-                    while len(futures) > 100000:
-                        continue
-                    db_img = rows.fetchone()
-                    if db_img is None:
-                        print("Reached end")
-                        break
-                    if db.test_exists_digit(db_img[0]) == 0:
-                        num_skipped += 1
-                        if num_skipped % 10000 == 0:
-                            print("Skipped " + str(num_skipped) + " images so far")
-                        continue
-
-                    num_submitted += 1
-                    if num_submitted % 10000 == 0:
-                        print("Submitted " + str(num_submitted) + " images so far")
-
-                    futures.append(executor.submit(execute, db_img[0], db_img[1], db_img[2], db_img[3]))
-            except TypeError as e:
-                print(e)
-            print("Skipped a total of {} and submitted a total of {}".format(num_skipped, num_submitted))
-            for done in cf.as_completed(futures):
-                num += 1
-                if num % 100 == 0:
-                    print("Number of images segmented is: {} out of a total of {}".format(num, num_read))
-                    db.connection.commit()
-                futures.remove(done)
-                handle_done(done, db)
+            read_and_submit(db, executor, futures)
             print("--- " + str(time.time() - start_time) + " ---")
+
+
+def process_futures(db, futures, num):
+    num_read = db.count_rows_in_fields().fetchone()[0]
+    for done in cf.as_completed(futures):
+        num += 1
+        if num % 100 == 0:
+            print("Number of images segmented is: {}/{}".format(num, num_read))
+            db.connection.commit()
+        futures.remove(done)
+        handle_done(done, db)
+    return num
+
+
+def read_and_submit(db, executor, futures):
+    num = 0
+    skipped = 0
+    try:
+        rows = db.select_all_images()
+        while True:
+            db_img = rows.fetchone()
+            if db_img is None:
+                print("Reached end")
+                break
+            valid = db.test_exists_digit(db_img[0])[0]
+            if valid == 0:
+                skipped += 1
+                print("Skupping " + db_img[0])
+                continue
+
+            if len(futures) > 100:
+                # Each time a limit is reached, process all the executed
+                num = process_futures(db, futures, num + skipped)
+
+            futures.append(executor.submit(execute, db_img[0], db_img[1], db_img[2], db_img[3]))
+
+        # Do the final batch
+        process_futures(db, futures, num)
+    except TypeError as e:
+        print(e)
 
 
 def handle_main():
