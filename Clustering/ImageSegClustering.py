@@ -9,6 +9,7 @@ import concurrent.futures as cf
 import time
 import argparse
 from Database.dbHandler import DbHandler
+import os
 
 
 class GaussianNormalDistributionCluster:
@@ -334,6 +335,7 @@ def execute(name, img, height, width):
     :param img: image
     :return: list of images separated, name of the file, error message if not completed
     """
+    print(os.getpid())
     gnc = GaussianNormalDistributionCluster()
     try:
         image = gnc.load_image(img, height, width)
