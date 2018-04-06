@@ -436,7 +436,7 @@ def run_parallel(db_loc):
     # All usage of image strings might be volatile
     with cf.ProcessPoolExecutor(max_workers=8) as executor:
         with DbHandler(db_loc) as db:
-            num_read = db.count_rows_in_table("fields")
+            num_read = db.count_rows_in_fields()
             for db_img in db.select_all_images():
                 futures.append(executor.submit(execute, db_img[0], db_img[1], db_img[2], db_img[3]))
 

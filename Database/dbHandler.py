@@ -31,8 +31,11 @@ class DbHandler:
     def select_all_images(self):
         return self.cursor.execute("SELECT * FROM fields")
 
-    def count_rows_in_table(self, table_name):
-        return self.cursor.execute("SELECT Count(*) FROM :table_name", {'table_name': table_name})
+    def count_rows_in_fields(self):
+        return self.cursor.execute("SELECT Count(*) FROM fields")
+
+    def count_rows_in_digit(self):
+        return self.cursor.execute("SELECT Count(*) FROM digit")
 
     def __enter__(self):
         try:
