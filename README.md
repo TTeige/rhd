@@ -55,7 +55,11 @@ to be processed.
       - _convert_image - Converts the image to grayscale and mask the digit from the field.
 
 ### Notes
-Can contain bugs when it comes to defining target columns. See the constructor of ImageParser.py. 
+Can contain bugs when it comes to defining target columns. See the constructor of ImageParser.py. The field index is misleading.
+The current index written to the image names are offset by a set value. To calculate the original image field
+position use: (image_name_index - 1) / 2. This has come from using the indexes calculated in the program. 
+The coordinate file from Analyseform lead to these issues. If realized earlier, it could've been easily fixed.
+
 
 ## Clustering
 The clustering directory contains the script for using the multi component gaussian normal distribution clustering algorithm. The directory also contains the algorithm for clustering the training set based on the geometric shapes in the single digit images.
