@@ -408,7 +408,7 @@ def run_parallel(db_loc):
     num = 0
     with cf.ProcessPoolExecutor(max_workers=8) as executor:
         with DbHandler(db_loc) as db:
-            num_read = db.count_rows_in_fields()
+            num_read = db.count_rows_in_fields().fetchone()
             all_selected = db.select_all_images()
             while all_selected.fetchmany(1000):
                 for db_img in all_selected:
