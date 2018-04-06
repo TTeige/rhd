@@ -411,6 +411,8 @@ def run_parallel(db_loc):
             num_read = db.count_rows_in_fields().fetchone()[0]
             rows = db.select_all_images()
             while True:
+                while len(futures) > 100000:
+                    continue
                 db_img = rows.fetchone()
                 if db_img is None:
                     print("All futures created")
