@@ -420,22 +420,22 @@ def run_parallel(db_loc):
                         continue
                     db_img = rows.fetchone()
                     if db_img is None:
-                        print("Reached end or error")
+                        print("Reached end")
                         break
-                    if db.test_exists_digit(db_img[0]):
+                    if db.test_exists_digit(db_img[0]) == 0:
                         num_skipped += 1
-                        if num_skipped % 100 == 0:
+                        if num_skipped % 10000 == 0:
                             print("Skipped " + str(num_skipped) + " images so far")
                         continue
 
                     num_submitted += 1
-                    if num_submitted % 100 == 0:
+                    if num_submitted % 10000 == 0:
                         print("Submitted " + str(num_submitted) + " images so far")
 
                     futures.append(executor.submit(execute, db_img[0], db_img[1], db_img[2], db_img[3]))
             except TypeError as e:
                 print(e)
-
+            print("Skipped a total of {} and submitted a total of {}".format(num_skipped, num_submitted))
             for done in cf.as_completed(futures):
                 num += 1
                 if num % 100 == 0:
