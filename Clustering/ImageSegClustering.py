@@ -57,6 +57,7 @@ class GaussianNormalDistributionCluster:
         img = cv2.GaussianBlur(img, (5, 5), 0)
         self.image = img
         if self.image is None:
+            print("Image is None")
             raise ValueError("Unable to load image, check path")
         return self.image
 
