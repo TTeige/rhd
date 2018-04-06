@@ -420,12 +420,12 @@ def run_parallel(db_loc):
                 futures.append(executor.submit(execute, db_img[0], db_img[1], db_img[2], db_img[3]))
 
             for done in cf.as_completed(futures):
-                handle_done(done, db)
-                futures.remove(done)
                 num += 1
                 if num % 100 == 0:
                     print("Number of images segmented is: {} out of a total of {}".format(num, num_read))
                     db.connection.commit()
+                futures.remove(done)
+                handle_done(done, db)
             print("--- " + str(time.time() - start_time) + " ---")
 
 
