@@ -441,7 +441,7 @@ def read_and_submit(db, executor, futures):
                 skipped += 1
                 continue
 
-            if len(futures) > 100:
+            if len(futures) > 10000:
                 # Each time a limit is reached, process all the executed
                 num = process_futures(db, futures, num + skipped, num_read)
 
