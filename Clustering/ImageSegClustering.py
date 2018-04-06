@@ -419,6 +419,7 @@ def run_parallel(db_loc):
                     while len(futures) > 100000:
                         continue
                     db_img = rows.fetchone()
+                    print(db_img)
                     if db_img is None:
                         break
                     if db.test_exists_digit(db_img[0]):
