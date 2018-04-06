@@ -85,42 +85,24 @@ class ImageParser:
         gray_channel = cv2.split(output_hsv)[2]
         retval, gray_channel = cv2.threshold(gray_channel, 100, 255, cv2.THRESH_BINARY)
         gray_channel = cv2.GaussianBlur(gray_channel, (3, 3), 0)
-        # for i in range(0, gray_channel.shape[1]):
-        #     done = False
-        #     for col in gray_channel[:, i]:
-        #         if col != 0:
-        #             gray_channel = np.delete(gray_channel, np.s_[:i], axis=1)
-        #             done = True
-        #             break
-        #     if done:
-        #         break
-        # for i in range(gray_channel.shape[1] - 1, 0, -1):
-        #     done = False
-        #     for col in gray_channel[:, i]:
-        #         if col != 0:
-        #             gray_channel = np.delete(gray_channel, np.s_[i:], axis=1)
-        #             done = True
-        #             break
-        #     if done:
-        #         break
-
         gray_channel = cv2.bitwise_not(gray_channel)
-        #
-        # gray_channel = cv2.resize(gray_channel, (60, 60), interpolation=cv2.INTER_AREA)
-        #
-        # reshaped = np.full((64, 64), 255, dtype='uint8')
-        # p = np.array(gray_channel)
-        # x_off = y_off = 2
-        # reshaped[x_off:p.shape[0] + x_off, y_off:p.shape[1] + y_off] = p
 
         return gray_channel
 
     @staticmethod
     def _extract_field(img, row_1, row_2, i):
         # x position different index on same row
+        """
+        x1-----------x2
+        x1-----------x2
+        """
         x1 = row_1[i][0]
         x2 = row_1[i + 2][0]
         # y position same index on different row
+        """
+        y1----------y1
+        y2----------y2
+        """
         y1 = row_1[i][1]
         y2 = row_2[i][1]
         field_img = img[y1:y2, x1:x2]
@@ -129,8 +111,10 @@ class ImageParser:
     def _check_extraction(self, img, row_1, row_2, i):
         field_img = []
         if len(self.target_fields) > 0:
+            # check if the current field is a field that is wanted
             if row_1[i - 1] in self.target_fields:
                 field_img = self._extract_field(img, row_1, row_2, i)
+            # Same as above, only the field is defined as a string
             elif isinstance(self.target_fields[0], str):
                 for name in self.target_fields:
                     if self.col_names[name] == row_1[i - 1]:
