@@ -419,15 +419,13 @@ def run_parallel(db_loc):
                     while len(futures) > 100000:
                         continue
                     db_img = rows.fetchone()
-                    print(db_img)
+                    print(db_img[0])
                     if db_img is None:
+                        print("Reached end or error")
                         break
                     if db.test_exists_digit(db_img[0]):
                         num_skipped += 1
                         continue
-                    if db_img is None:
-                        print("All futures created")
-                        break
 
                     futures.append(executor.submit(execute, db_img[0], db_img[1], db_img[2], db_img[3]))
                     num_submitted += 1
