@@ -45,10 +45,14 @@ class ImageParser:
         extracted_rows = self._extract_rows(rows)
 
         image_fields = []
+        img = cv2.imread(filename)
+        if len(img) == 0:
+            print("Image not found: " + filename + " , check path prefix or remote connections")
+            return []
         for i in range(0, len(extracted_rows) - 1, 2):
             row_1 = extracted_rows[i][0]
             row_2 = extracted_rows[i + 1][0]
-            fields = self._split_row(filename, row_1, row_2)
+            fields = self._split_row(img, row_1, row_2)
             i += 1
             image_fields.append((fields, extracted_rows[i][1]))
         return image_fields, filename
@@ -137,13 +141,9 @@ class ImageParser:
 
         return field_img
 
-    def _split_row(self, img_path, row_1, row_2):
+    def _split_row(self, img, row_1, row_2):
         try:
             fields = []
-            img = cv2.imread(img_path)
-            if len(img) == 0:
-                print("Image not found: " + img_path + " , check path prefix or remote connections")
-                return []
 
             for i in range(1, len(row_1) - 2, 2):
                 field_img = self._check_extraction(img, row_1, row_2, i)
@@ -153,7 +153,6 @@ class ImageParser:
                     fields.append((field_img, i))
             return fields
         except Exception as e:
-            print("Skipping image " + img_path + " Error: ")
             print(e)
 
     def _extract_rows(self, rows):
