@@ -21,12 +21,17 @@ class DbHandler:
 
     def test_exists(self, name):
         c = self.connection.cursor()
-        c.execute("SELECT EXISTS(SELECT 1 FROM fields WHERE name=:name LIMIT 1)", {'name': name})
+        c.execute("SELECT EXISTS(SELECT 1 FROM fields WHERE name LIKE :name LIMIT 1)", {'name': name})
         return c.fetchone()
 
     def test_exists_digit(self, name):
         c = self.connection.cursor()
-        c.execute("SELECT EXISTS(SELECT 1 FROM digit WHERE name=:name LIMIT 1)", {'name': name})
+        c.execute("SELECT EXISTS(SELECT 1 FROM digit WHERE name LIKE :name LIMIT 1)", {'name': "%"+name+"%"})
+        return c.fetchone()
+
+    def test_exists_dropped(self, name):
+        c = self.connection.cursor()
+        c.execute("SELECT EXISTS(SELECT 1 FROM dropped WHERE name LIKE :name LIMIT 1)", {'name': "%" + name + "%"})
         return c.fetchone()
 
     def select_image(self, name):

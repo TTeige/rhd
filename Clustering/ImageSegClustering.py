@@ -413,8 +413,7 @@ def run_parallel(db_loc):
             print("--- " + str(time.time() - start_time) + " ---")
 
 
-def process_futures(db, futures, num):
-    num_read = db.count_rows_in_fields().fetchone()[0]
+def process_futures(db, futures, num, num_read):
     for done in cf.as_completed(futures):
         num += 1
         if num % 100 == 0:
@@ -428,28 +427,31 @@ def process_futures(db, futures, num):
 def read_and_submit(db, executor, futures):
     num = 0
     skipped = 0
+    num_read = db.count_rows_in_fields().fetchone()[0]
     try:
         rows = db.select_all_images()
         while True:
             db_img = rows.fetchone()
-            if db_img is None:
-                print("Reached end")
+            if db_img is None or num == num_read:
+                print("Reached end, number of skipped images: ", str(skipped))
                 break
-            valid = db.test_exists_digit(db_img[0])[0]
-            if valid == 0:
+            exists_digit = db.test_exists_digit(db_img[0])[0]
+            exists_dropped = db.test_exists_dropped(db_img[0])[0]
+            if exists_digit == 1 or exists_dropped == 1:
                 skipped += 1
-                print("Skupping " + db_img[0])
                 continue
 
             if len(futures) > 100:
                 # Each time a limit is reached, process all the executed
-                num = process_futures(db, futures, num + skipped)
+                num = process_futures(db, futures, num + skipped, num_read)
 
             futures.append(executor.submit(execute, db_img[0], db_img[1], db_img[2], db_img[3]))
 
         # Do the final batch
-        process_futures(db, futures, num)
+        process_futures(db, futures, num, num_read)
     except TypeError as e:
+        print(e)
+    except Exception as e:
         print(e)
 
 
