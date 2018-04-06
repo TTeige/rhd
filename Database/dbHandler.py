@@ -30,8 +30,7 @@ class DbHandler:
         return self.cursor.fetchone()
 
     def select_all_images(self):
-        self.cursor.execute("SELECT * FROM fields")
-        return self.cursor.fetchmany(1000)
+        return self.cursor.execute("SELECT * FROM fields")
 
     def count_rows_in_fields(self):
         return self.cursor.execute("SELECT Count(*) FROM fields")
