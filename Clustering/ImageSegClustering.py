@@ -41,7 +41,7 @@ class GaussianNormalDistributionCluster:
         """
         return (np.exp(-np.power(x - mu, 2.) / (2 * sig)) / (math.sqrt(2 * math.pi) * math.sqrt(sig))) * weight
 
-    def load_image(self, img, width, height):
+    def load_image(self, img, height, width):
         """
         Loads an image in grayscale using opencv
         :param img: image in byte values
@@ -50,7 +50,7 @@ class GaussianNormalDistributionCluster:
         """
 
         bytearray = np.fromstring(img, np.uint8)
-        self.image = bytearray.reshape([width, height])
+        self.image = bytearray.reshape([height, width])
         affine = np.array([[1, 0, 0], [-0.3, 1, 0], [0, 0, 1]])
         img = affine_transform(self.image, affine, cval=255)
         img = cv2.GaussianBlur(img, (5, 5), 0)
@@ -327,37 +327,6 @@ class GaussianNormalDistributionCluster:
         return intersections
 
 
-def run_test(db_loc, image_name="4_27fs10061402170627.jpg"):
-    """
-    Test run against single images
-    :param path: path to the image
-    :return:
-    """
-    # np.random.seed(0)
-    db = DbHandler(db_loc)
-    db_image_entry = db.select_image(image_name)
-    gnc = GaussianNormalDistributionCluster()
-    img = gnc.load_image(db_image_entry[1], db_image_entry[2], db_image_entry[3])
-    x_density = gnc.get_x_density()
-    gnc.render_hist(x_density)
-    sum_g = gnc.get_summed_gaussian(x_density)
-    gnc.render_dist(sum_g)
-    mins = gnc.get_minimas(sum_g)
-    maxes = gnc.get_maxims(sum_g)
-    plt.scatter(np.append(mins[0], maxes[0]), np.append(sum_g[mins[0]], sum_g[maxes[0]]), c='r', zorder=10)
-    plt.show()
-    new_images, _, _ = execute("", db_image_entry[1], db_image_entry[2], db_image_entry[3])
-
-    cv2.line(gnc.image, (mins[0][0], img.shape[1]), (mins[0][0], 0), 0)
-    cv2.line(gnc.image, (mins[0][1], img.shape[1]), (mins[0][1], 0), 0)
-
-    cv2.imshow("0", new_images[0])
-    cv2.imshow("1", new_images[1])
-    cv2.imshow("2", new_images[2])
-    cv2.imshow("image", gnc.image)
-    cv2.waitKey()
-
-
 def execute(name, img, height, width):
     """
     Function to handle the launching of a parallel task
@@ -367,7 +336,7 @@ def execute(name, img, height, width):
     """
     gnc = GaussianNormalDistributionCluster()
     try:
-        image = gnc.load_image(img, width, height)
+        image = gnc.load_image(img, height, width)
         x_density = gnc.get_x_density()
         sum_g = gnc.get_summed_gaussian(x_density)
         mins = gnc.get_minimas(sum_g)
@@ -436,14 +405,11 @@ def run_parallel(db_loc):
     start_time = time.time()
     futures = []
     num = 0
-    # The following is not big data safe, could run out of memory, best would be to create a stream, but python....
-    image_strings = []
-    # All usage of image strings might be volatile
     with cf.ProcessPoolExecutor(max_workers=8) as executor:
         with DbHandler(db_loc) as db:
             num_read = db.count_rows_in_fields()
             for db_img in db.select_all_images():
-                futures.append(executor.submit(execute, db_img[0], db_img[1], db_img[2], db_img[3]))
+                futures.append(executor.submit(execute, db_img[0], db_img[1], db_img[3], db_img[2]))
 
             for done in cf.as_completed(futures):
                 handle_done(done, db)
@@ -465,6 +431,37 @@ def handle_main():
         run_test(args.db)
     else:
         run_parallel(args.db)
+
+
+def run_test(db_loc, image_name="2_27fs10061402176753.jpg"):
+    """
+    Test run against single images
+    :param path: path to the image
+    :return:
+    """
+    # np.random.seed(0)
+    db = DbHandler(db_loc)
+    db_image_entry = db.select_image(image_name)
+    gnc = GaussianNormalDistributionCluster()
+    img = gnc.load_image(db_image_entry[1], db_image_entry[2], db_image_entry[3])
+    x_density = gnc.get_x_density()
+    gnc.render_hist(x_density)
+    sum_g = gnc.get_summed_gaussian(x_density)
+    gnc.render_dist(sum_g)
+    mins = gnc.get_minimas(sum_g)
+    maxes = gnc.get_maxims(sum_g)
+    plt.scatter(np.append(mins[0], maxes[0]), np.append(sum_g[mins[0]], sum_g[maxes[0]]), c='r', zorder=10)
+    plt.show()
+    new_images, _, _ = execute("", db_image_entry[1], db_image_entry[2], db_image_entry[3])
+
+    cv2.line(gnc.image, (mins[0][0], img.shape[1]), (mins[0][0], 0), 0)
+    cv2.line(gnc.image, (mins[0][1], img.shape[1]), (mins[0][1], 0), 0)
+
+    cv2.imshow("0", new_images[0])
+    cv2.imshow("1", new_images[1])
+    cv2.imshow("2", new_images[2])
+    cv2.imshow("image", gnc.image)
+    cv2.waitKey()
 
 
 if __name__ == '__main__':
