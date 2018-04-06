@@ -12,13 +12,13 @@ class DbHandler:
             self.cursor = self.connection.cursor()
 
     def store_field(self, name, img):
-        self.cursor.execute('insert into fields VALUES (?, ?, ?, ?)', (name, img, img.shape[0], img.shape[1]))
+        self.cursor.execute('insert or IGNORE into fields VALUES (?, ?, ?, ?)', (name, img, img.shape[0], img.shape[1]))
 
     def store_digit(self, name, img):
-        self.cursor.execute('insert into digit VALUES (?, ?)', (name, img))
+        self.cursor.execute('insert or IGNORE into digit VALUES (?, ?)', (name, img))
 
     def store_dropped(self, name, reason):
-        self.cursor.execute('insert into dropped VALUES (?, ?)', (name, reason))
+        self.cursor.execute('insert or IGNORE into dropped VALUES (?, ?)', (name, reason))
 
     def test_exists(self, name):
         self.cursor.execute("SELECT EXISTS(SELECT 1 FROM fields VALUES (?) LIMIT 1)", (name))
