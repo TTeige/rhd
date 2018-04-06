@@ -336,7 +336,6 @@ def execute(name, img, height, width):
     :param img: image
     :return: list of images separated, name of the file, error message if not completed
     """
-    print(os.getpid())
     gnc = GaussianNormalDistributionCluster()
     try:
         image = gnc.load_image(img, height, width)
@@ -412,15 +411,27 @@ def run_parallel(db_loc):
     with cf.ProcessPoolExecutor(max_workers=8) as executor:
         with DbHandler(db_loc) as db:
             num_read = db.count_rows_in_fields().fetchone()[0]
-            rows = db.select_all_images()
-            while True:
-                while len(futures) > 100000:
-                    continue
-                db_img = rows.fetchone()
-                if db_img is None:
-                    print("All futures created")
-                    break
-                futures.append(executor.submit(execute, db_img[0], db_img[1], db_img[2], db_img[3]))
+            num_submitted = 0
+            num_skipped = 0
+            try:
+                rows = db.select_all_images()
+                while True:
+                    while len(futures) > 100000:
+                        continue
+                    db_img = rows.fetchone()
+                    if db_img is None:
+                        break
+                    if db.test_exists_digit(db_img[0]):
+                        num_skipped += 1
+                        continue
+                    if db_img is None:
+                        print("All futures created")
+                        break
+
+                    futures.append(executor.submit(execute, db_img[0], db_img[1], db_img[2], db_img[3]))
+                    num_submitted += 1
+            except TypeError as e:
+                print(e)
 
             for done in cf.as_completed(futures):
                 num += 1
@@ -450,7 +461,6 @@ def run_test(db_loc, image_name="2_27fs10061402176753.jpg"):
     :param path: path to the image
     :return:
     """
-    # np.random.seed(0)
     db = DbHandler(db_loc)
     db_image_entry = db.select_image(image_name)
     gnc = GaussianNormalDistributionCluster()
