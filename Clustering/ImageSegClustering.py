@@ -383,6 +383,9 @@ def execute(name, img, height, width):
 
         print("{} Skipping image at path: {} due to lacking values in x_density".format(e, name))
         return None, name, " lacking values in x_density. Exception {}".format(e)
+    except Exception as e:
+        print(e)
+        return None, name, str(e)
 
     try:
         new_images = gnc.split_image(image, mins[0], maxes[0])
@@ -394,7 +397,9 @@ def execute(name, img, height, width):
         # So these images are just skipped.
         print("{} Skipping image at path: {} due to single minima or maxima".format(e, name))
         return None, name, "single minima or maxima. Exception {}".format(e)
-
+    except Exception as e:
+        print(e)
+        return None, name, str(e)
 
 def handle_done(done, db):
     """
